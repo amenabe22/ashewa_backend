@@ -36,15 +36,43 @@ class Query(graphene.ObjectType):
         ProductsPaginatedType, page=graphene.Int(), page_size=graphene.Int())
     user_data = graphene.List(UsersDataType)
     see_gen = graphene.List(SingleNetworkLayerType, plan=graphene.String())
+    get_gen = graphene.JSONString(plan=graphene.String())
 
-    @permissions_checker([AdminPermission])
+    @permissions_checker([AffilatePermission])
+    def resolve_get_gen(self, info, plan):
+        network_manager = UniLevelMarketingNetworkManager(
+            planid=plan, plan_type="core"
+        )
+        # network_manager.get_genology()
+        # for x in network_manager.planSets['firstSets']:
+        #     x['user']
+        fin = network_manager.get_all_nets(user=info.context.user)
+        return fin
+
+    @permissions_checker([AffilatePermission])
     def resolve_see_gen(self, info, plan):
         # users network manager library to determine genology tree
         network_manager = UniLevelMarketingNetworkManager(
-            plan=plan, user=info.context.user, plan_type="core"
+            planid=plan, plan_type="core"
         )
-        network_manager.get_genology()
-        return network_manager.planSets['firstSets']
+        # network_manager.get_genology()
+        # for x in network_manager.planSets['firstSets']:
+        #     x['user']
+        fin = network_manager.get_all_nets(user=info.context.user)
+        # for x in network_manager.planSets['firstSets']:
+        #     mlm = UniLevelMarketingNetworkManager(
+        #         plan=plan, user=x['user'][0])
+        #     network_manager.planSets['firstSets'].append(
+        #         {'children': mlm.get_genology()['firstSets']}
+        #     )
+        # print(network_manager.planSets['firstSets'])
+        # print(mlm.get_genology()['firstSets'])
+        # print("@/"*20)
+        # print(network_manager.planSets['firstSets'])
+        # print("@/"*20)
+        # [pprint(UniLevelMarketingNetworkManager(plan=plan, user=i['user'][0],
+        #                                         plan_type="core").get_genology()) for i in network_manager.planSets['firstSets']]
+        return fin
 
     @permissions_checker([IsAuthenticated])
     def resolve_layers_data(self, info):
