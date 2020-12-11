@@ -2,13 +2,13 @@ import graphql
 import graphene
 import graphql_jwt
 from pprint import pprint
-from vendors.types import VendorType
-from vendors.models import Vendor
 from .utils import get_core_paginator
 from .admin_mutations import CreateMarketingPlans
+from vendors.models import Vendor, VendorLevelPlans
 from core_ecommerce.types import (
     ProductImageType, ProductsType, ParentCategoryType,
     CategoryType, SubCatsType, ProductsPaginatedType)
+from vendors.types import VendorType, VendorPlanType
 from vendors.vendor_mutations import UpdateStoreCover
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
@@ -20,7 +20,7 @@ from core_ecommerce.models import(
     Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
 from core_marketing.models import CoreLevelPlans, UnilevelNetwork
-from core_marketing.types import CoreMarketingPlanTypes, SingleNetworkLayerType
+from core_marketing.types import CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet
 from core_ecommerce.product_mutations import NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
 
@@ -35,8 +35,20 @@ class Query(graphene.ObjectType):
     vendor_products = graphene.Field(
         ProductsPaginatedType, page=graphene.Int(), page_size=graphene.Int())
     user_data = graphene.List(UsersDataType)
-    see_gen = graphene.List(SingleNetworkLayerType, plan=graphene.String())
+    see_gen = graphene.List(SingleNet,
+                            #  SingleNetworkLayerType,
+                            plan=graphene.String())
     get_gen = graphene.JSONString(plan=graphene.String())
+    all_vendor_plans = graphene.List(VendorPlanType)
+    all_core_plans = graphene.List(CoreMarketingPlanTypes)
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_all_core_plans(self, info):
+        return CoreLevelPlans.objects.all()
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_all_vendor_plans(self, info):
+        return VendorLevelPlans.objects.all()
 
     @permissions_checker([AffilatePermission])
     def resolve_get_gen(self, info, plan):
