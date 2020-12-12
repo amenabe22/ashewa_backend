@@ -25,44 +25,24 @@ class CoreBrand(models.Model):
         return self.brand_name
 
 
-# class UnilevelNetwork(models.Model):
-#     layer_id = models.UUIDField(
-#         default=uuid4, editable=False, primary_key=True)
-#     affilate = models.ForeignKey(Affilate, on_delete=models.CASCADE)
-#     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
-#     level = models.IntegerField(
-#         help_text="network level count", null=True, blank=True)
-#     marketing_plan = models.ForeignKey(
-#         CoreLevelPlans, on_delete=models.CASCADE, null=True, blank=True)
-#     vendor_plan = models.ForeignKey(
-#         VendorLevelPlans, on_delete=models.CASCADE, null=True, blank=True)
-#     timestamp = models.DateTimeField(auto_now_add=True)
-
-#     def __str__(self):
-#         return "**{}** called ==> ||{}|| <==> ON {}".format(
-#             self.affilate.user.username, self.user.username, self.marketing_plan)
-
-#     def save(self, *args, **kwargs):
-#         parent_relations = UnilevelNetwork.objects.filter(
-#             affilate=self.affilate, marketing_plan=self.marketing_plan)
-#         super(UnilevelNetwork, self).save(*args, **kwargs)
 class UnilevelNetwork(models.Model):
     layer_id = models.UUIDField(
         default=uuid4, editable=False, primary_key=True)
-    marketing_plan = models.ForeignKey(CoreLevelPlans, on_delete=models.CASCADE, null=True)
+    marketing_plan = models.ForeignKey(
+        CoreLevelPlans, on_delete=models.CASCADE, null=True)
     affilate = models.ForeignKey(Affilate, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
     # level = models.IntegerField(null=True, default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "{} => {}".format(self.affilate.user.username ,self.user.username)
+        return "{} => {}".format(self.affilate.user.username, self.user.username)
 
     def save(self, *args, **kwargs):
-        all_other_current_nets = UnilevelNetwork.objects.filter(marketing_plan=self.marketing_plan).exclude(layer_id=self.layer_id)
+        all_other_current_nets = UnilevelNetwork.objects.filter(
+            marketing_plan=self.marketing_plan).exclude(layer_id=self.layer_id)
         print(all_other_current_nets)
         super(UnilevelNetwork, self).save(*args, **kwargs)
-
 
 
 class Rewards(models.Model):
@@ -123,3 +103,21 @@ class DepositReport(models.Model):
 
     def __str__(self):
         return str(self.transaction_id)
+
+
+class AffilatePlans(models.Model):
+    pl_types = [
+        ('core', 'Core Plans'),
+        ('ven', 'Vendor Plan'),
+    ]
+    plan_id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
+    affilate = models.ForeignKey(Affilate, on_delete=models.CASCADE)
+    plan_type = models.CharField(max_length=5, choices=pl_types, null=True)
+    core_plan = models.OneToOneField(
+        CoreLevelPlans, on_delete=models.CASCADE, null=True, blank=True)
+    vendor_plan = models.OneToOneField(
+        VendorLevelPlans, on_delete=models.CASCADE, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.plan_id)

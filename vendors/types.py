@@ -13,3 +13,12 @@ class VendorPlanType(DjangoObjectType):
     class Meta:
         model = VendorLevelPlans
         fields = '__all__'
+
+
+class VendorPlanPaginatedType(graphene.ObjectType):
+    page = graphene.Int()
+    pages = graphene.Int()
+    has_next = graphene.Boolean()
+    has_prev = graphene.Boolean()
+    objects = graphene.List(VendorPlanType)
+    total = graphene.Int()

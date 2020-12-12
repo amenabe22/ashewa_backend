@@ -8,7 +8,6 @@ from vendors.models import Vendor, VendorLevelPlans
 from core_ecommerce.types import (
     ProductImageType, ProductsType, ParentCategoryType,
     CategoryType, SubCatsType, ProductsPaginatedType)
-from vendors.types import VendorType, VendorPlanType
 from vendors.vendor_mutations import UpdateStoreCover
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
@@ -19,11 +18,14 @@ from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(
     Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
-from core_marketing.models import CoreLevelPlans, UnilevelNetwork
-from core_marketing.types import CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet
-from core_ecommerce.product_mutations import NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory
+from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
+from vendors.types import VendorType, VendorPlanType, VendorPlanPaginatedType
+from core_marketing.types import(
+    CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
+from core_ecommerce.product_mutations import(
+    NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-
+from core_marketing.marketing_mutations import AddPlanMutation
 
 class Query(graphene.ObjectType):
     data = graphene.List(VendorType)
@@ -31,7 +33,8 @@ class Query(graphene.ObjectType):
     cats = graphene.List(CategoryType)
     all_users = graphene.List(CoreUsersType)
     sub_cats = graphene.List(SubCatsType)
-    all_marketing_plans = graphene.List(CoreMarketingPlanTypes)
+    all_marketing_plans = graphene.Field(
+        CorePlanPaginatedType, page_size=graphene.Int(), page=graphene.Int())
     vendor_products = graphene.Field(
         ProductsPaginatedType, page=graphene.Int(), page_size=graphene.Int())
     user_data = graphene.List(UsersDataType)
@@ -39,16 +42,43 @@ class Query(graphene.ObjectType):
                             #  SingleNetworkLayerType,
                             plan=graphene.String())
     get_gen = graphene.JSONString(plan=graphene.String())
-    all_vendor_plans = graphene.List(VendorPlanType)
+    all_vendor_plans = graphene.Field(
+        VendorPlanPaginatedType, page_size=graphene.Int(), page=graphene.Int())
     all_core_plans = graphene.List(CoreMarketingPlanTypes)
+    affilate_plans = graphene.List(AffilatePlansType)
+    store_vendor_plan = graphene.List(VendorPlanType)
+
+    @permissions_checker([VendorsPermission])
+    def resolve_store_vendor_plan(self, info):
+        return VendorLevelPlans.objects.filter(
+            creator=Vendor.objects.get(
+                user=info.context.user
+            )
+        )
+
+    @permissions_checker([AffilatePermission])
+    def resolve_affilate_plans(self, info):
+        return AffilatePlans.objects.filter(
+            affilate=Affilate.objects.get(user=info.context.user)
+        )
 
     @permissions_checker([IsAuthenticated])
     def resolve_all_core_plans(self, info):
         return CoreLevelPlans.objects.all()
 
+    @permissions_checker([VendorsPermission])
+    def resolve_vendor_products(self, info, page, page_size):
+        qs = Products.objects.filter(
+            vendor=Vendor.objects.get(
+                user=info.context.user
+            )).order_by('-created_timestamp')
+        return get_core_paginator(qs, page_size, page, ProductsPaginatedType)
+
     @permissions_checker([IsAuthenticated])
-    def resolve_all_vendor_plans(self, info):
-        return VendorLevelPlans.objects.all()
+    def resolve_all_vendor_plans(self, info, page_size, page):
+        qs = VendorLevelPlans.objects.all()
+        return get_core_paginator(qs, page_size, page, VendorPlanPaginatedType)
+        # return VendorLevelPlans.objects.all()
 
     @permissions_checker([AffilatePermission])
     def resolve_get_gen(self, info, plan):
@@ -63,27 +93,10 @@ class Query(graphene.ObjectType):
 
     @permissions_checker([AffilatePermission])
     def resolve_see_gen(self, info, plan):
-        # users network manager library to determine genology tree
         network_manager = UniLevelMarketingNetworkManager(
             planid=plan, plan_type="core"
         )
-        # network_manager.get_genology()
-        # for x in network_manager.planSets['firstSets']:
-        #     x['user']
         fin = network_manager.get_all_nets(user=info.context.user)
-        # for x in network_manager.planSets['firstSets']:
-        #     mlm = UniLevelMarketingNetworkManager(
-        #         plan=plan, user=x['user'][0])
-        #     network_manager.planSets['firstSets'].append(
-        #         {'children': mlm.get_genology()['firstSets']}
-        #     )
-        # print(network_manager.planSets['firstSets'])
-        # print(mlm.get_genology()['firstSets'])
-        # print("@/"*20)
-        # print(network_manager.planSets['firstSets'])
-        # print("@/"*20)
-        # [pprint(UniLevelMarketingNetworkManager(plan=plan, user=i['user'][0],
-        #                                         plan_type="core").get_genology()) for i in network_manager.planSets['firstSets']]
         return fin
 
     @permissions_checker([IsAuthenticated])
@@ -96,9 +109,10 @@ class Query(graphene.ObjectType):
         return CustomUser.objects.filter(
             user_id=info.context.user.user_id)
 
-    @permissions_checker([AdminPermission])
-    def resolve_all_marketing_plans(self, info):
-        return CoreLevelPlans.objects.all()
+    @permissions_checker([IsAuthenticated])
+    def resolve_all_marketing_plans(self, info, page_size, page):
+        qs = CoreLevelPlans.objects.all()
+        return get_core_paginator(qs, page_size, page, CorePlanPaginatedType)
 
     @permissions_checker([AdminPermission])
     def resolve_all_users(self, info):
@@ -112,14 +126,6 @@ class Query(graphene.ObjectType):
 
     def resolve_sub_cats(self, info):
         return SubCategory.objects.all()
-
-    @permissions_checker([VendorsPermission])
-    def resolve_vendor_products(self, info, page, page_size):
-        qs = Products.objects.filter(
-            vendor=Vendor.objects.get(
-                user=info.context.user
-            )).order_by('-created_timestamp')
-        return get_core_paginator(qs, page_size, page, ProductsPaginatedType)
 
     @permissions_checker([VendorsPermission])
     def resolve_data(self, info):
@@ -139,6 +145,6 @@ class Mutations(graphene.ObjectType):
     create_scat = CreateSubCategory.Field(description="create sub category")
     update_store_pic = UpdateStoreCover.Field(description="Update store cover")
     new_user = NewUserMutation.Field(description="create new user")
-
+    add_plan_mutation = AddPlanMutation.Field(description="add a plan for an affilate")
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

@@ -21,7 +21,7 @@ class Vendor(models.Model):
 class VendorLevelPlans(models.Model):
     core_id = models.UUIDField(
         default=uuid4, editable=False, primary_key=True)
-    creator = models.OneToOneField(Vendor, on_delete=models.CASCADE)
+    creator = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     # optional multi level percentages
     plan_name = models.CharField(max_length=500, null=True)
     # joining_fee = models.FloatField(default=0.0, null=True)
