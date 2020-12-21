@@ -32,10 +32,19 @@ class AffilatePlansType(DjangoObjectType):
         model = AffilatePlans
 
 
+class CoreValueTypes(graphene.ObjectType):
+    val = graphene.List(CoreMarketingPlanTypes)
+    taken = graphene.Boolean()
+
 class CorePlanPaginatedType(graphene.ObjectType):
     page = graphene.Int()
     pages = graphene.Int()
     has_next = graphene.Boolean()
     has_prev = graphene.Boolean()
-    objects = graphene.List(CoreMarketingPlanTypes)
+    objects= graphene.List(CoreValueTypes)
     total = graphene.Int()
+    taken = graphene.Boolean()
+
+class LinesDataType(graphene.ObjectType):
+    name = graphene.String()
+    value = graphene.String()

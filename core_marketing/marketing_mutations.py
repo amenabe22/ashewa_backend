@@ -31,15 +31,36 @@ class AddPlanMutation(graphene.Mutation):
                 # not valid uuid pattern
                 raise Exception("value unkonwn")
             qs = CoreLevelPlans.objects.filter(core_id=core_id)
-            if (not qs.exists()):
+            if not qs.exists():
                 raise Exception("core plan not found")
-        try:
+        else:
+            if not UUID_PATTERN.match(ven_id):
+                # not valid uuid pattern
+                raise Exception("value unkonwn")
+            qs = VendorLevelPlans.objects.filter(core_id=ven_id)
+            if not qs.exists():
+                raise Exception("vend plan not found")
+
+
+        if plan_type == "core":
+            print(qs[0],"!"*200)
             AffilatePlans.objects.create(
+                core_plan=qs[0],
+                plan_type="core",
                 affilate=Affilate.objects.get(
                     user=info.context.user
                 )
             )
-        except Exception as e:
-            raise str(e)
+        else:
+            AffilatePlans.objects.create(
+                vendor_plan=qs[0],
+                plan_type="ven",
+                affilate=Affilate.objects.get(
+                    user=info.context.user
+                )
+            )
+        
+        # except Exception as e:
+        #     raise str(e)
 
         return AddPlanMutation(payload=True)

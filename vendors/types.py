@@ -15,10 +15,15 @@ class VendorPlanType(DjangoObjectType):
         fields = '__all__'
 
 
+class VendorValueTypes(graphene.ObjectType):
+    val = graphene.List(VendorPlanType)
+    taken = graphene.Boolean()
+
+
 class VendorPlanPaginatedType(graphene.ObjectType):
     page = graphene.Int()
     pages = graphene.Int()
     has_next = graphene.Boolean()
     has_prev = graphene.Boolean()
-    objects = graphene.List(VendorPlanType)
+    objects = graphene.List(VendorValueTypes)
     total = graphene.Int()

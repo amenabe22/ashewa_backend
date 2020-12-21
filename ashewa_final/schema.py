@@ -20,12 +20,14 @@ from core_ecommerce.models import(
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
 from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
 from vendors.types import VendorType, VendorPlanType, VendorPlanPaginatedType
-from core_marketing.types import(
-    CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
+from core_marketing.types import(LinesDataType,
+                                 CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
 from core_ecommerce.product_mutations import(
     NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
 from core_marketing.marketing_mutations import AddPlanMutation
+from .utils import recurs_iter
+
 
 class Query(graphene.ObjectType):
     data = graphene.List(VendorType)
@@ -47,6 +49,11 @@ class Query(graphene.ObjectType):
     all_core_plans = graphene.List(CoreMarketingPlanTypes)
     affilate_plans = graphene.List(AffilatePlansType)
     store_vendor_plan = graphene.List(VendorPlanType)
+    store_meta_data = graphene.List(VendorType, store=graphene.String())
+    get_lines = graphene.List(LinesDataType, plan=graphene.String())
+
+    def resolve_store_meta_data(self, info, store):
+        return Vendor.objects.filter(vendor_id=store)
 
     @permissions_checker([VendorsPermission])
     def resolve_store_vendor_plan(self, info):
@@ -72,12 +79,13 @@ class Query(graphene.ObjectType):
             vendor=Vendor.objects.get(
                 user=info.context.user
             )).order_by('-created_timestamp')
-        return get_core_paginator(qs, page_size, page, ProductsPaginatedType)
+
+        return get_core_paginator(qs, page_size, page, None, ProductsPaginatedType)
 
     @permissions_checker([IsAuthenticated])
     def resolve_all_vendor_plans(self, info, page_size, page):
         qs = VendorLevelPlans.objects.all()
-        return get_core_paginator(qs, page_size, page, VendorPlanPaginatedType)
+        return get_core_paginator(qs, page_size, page, info.context.user, VendorPlanPaginatedType)
         # return VendorLevelPlans.objects.all()
 
     @permissions_checker([AffilatePermission])
@@ -109,10 +117,15 @@ class Query(graphene.ObjectType):
         return CustomUser.objects.filter(
             user_id=info.context.user.user_id)
 
-    @permissions_checker([IsAuthenticated])
+    @permissions_checker([AffilatePermission])
     def resolve_all_marketing_plans(self, info, page_size, page):
         qs = CoreLevelPlans.objects.all()
-        return get_core_paginator(qs, page_size, page, CorePlanPaginatedType)
+        # aff = Affilate.objects.get(user=info.context.user)
+        print("#"*30)
+        return get_core_paginator(qs,
+                                  page_size, page,
+                                  info.context.user,
+                                  CorePlanPaginatedType)
 
     @permissions_checker([AdminPermission])
     def resolve_all_users(self, info):
@@ -131,6 +144,16 @@ class Query(graphene.ObjectType):
     def resolve_data(self, info):
         return Vendor.objects.filter(user=info.context.user)
 
+    @permissions_checker([AffilatePermission])
+    def resolve_get_lines(self, info, plan):
+        network_manager = UniLevelMarketingNetworkManager(
+            planid=plan, plan_type="core"
+        )
+        fin = network_manager.get_all_nets(user=info.context.user)
+        for x in fin:
+            p = recurs_iter(x)
+        return [{'name': 'Dowline', 'value': 'value'}]
+
 
 class Mutations(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
@@ -145,6 +168,8 @@ class Mutations(graphene.ObjectType):
     create_scat = CreateSubCategory.Field(description="create sub category")
     update_store_pic = UpdateStoreCover.Field(description="Update store cover")
     new_user = NewUserMutation.Field(description="create new user")
-    add_plan_mutation = AddPlanMutation.Field(description="add a plan for an affilate")
+    add_plan_mutation = AddPlanMutation.Field(
+        description="add a plan for an affilate")
+
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

@@ -36,7 +36,7 @@ class UniLevelMarketingNetworkManager(object):
         # print(self.plan)
         for idx, x in enumerate(tree):
             # TODO CHECK BACK HERE
-            # if the level is less than plan count 
+            # if the level is less than plan count
             # if x['level'] < self.plan.count:
             usr_inside_tree = tree[idx]['user'][0]
             tree[idx]['children'] = self.parse_nets(usr_inside_tree)
@@ -53,12 +53,21 @@ class UniLevelMarketingNetworkManager(object):
                         'core_level': x['level']})
         return fin
 
+    def get_net_by_lvl(self, nets, cnt):
+        fin_netpack = []
+        for nt in nets:
+            if nt['core_level'] == cnt:
+                print(nt['core_level'], cnt)
+                fin_netpack.append(nt)
+            # else:
+            #     raise Exception("Level not reached yet")
+        return fin_netpack
+
     def get_all_nets(self, user: CustomUser):
         self.setup_plans()
-        # for cnt in range(self.plan.count):
-        #     print(cnt)    
-        # pprint(self.parse_nets(user))
-        return self.parse_nets(user)
+        # DOES return only the first level
+        return self.get_net_by_lvl(self.parse_nets(user), 1)
+        # return self.parse_nets(user)
         # for x in _gen['firstSets']:
         #     self.massUsers.append(x['user'][0])
         # self.get_mass_genology(self.massUsers)

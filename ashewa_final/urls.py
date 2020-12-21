@@ -9,6 +9,8 @@ from graphql_jwt.decorators import jwt_cookie
 # from channels.routing import route_pattern_match
 # from graphql_ws.django_channels import GraphQLSubscriptionConsumer
 from core_marketing.views import getGen
+from graphql_playground.views import GraphQLPlaygroundView
+
 
 class GqlView(FileUploadGraphQLView, LoginRequiredMixin):
     pass
@@ -17,7 +19,9 @@ class GqlView(FileUploadGraphQLView, LoginRequiredMixin):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('graphql/',  csrf_exempt(jwt_cookie(GqlView.as_view(graphiql=True)))),
-    path('rel/<str:plan>/', getGen)
+    path('rel/<str:plan>/', getGen),
+    path('playground/', GraphQLPlaygroundView.as_view(endpoint="/graphql/")),
+
 ]
 
 

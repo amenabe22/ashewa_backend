@@ -2,7 +2,7 @@ import graphene
 from vendors.models import Vendor
 from core_ecommerce.models import CoreBrand
 from graphene_file_upload.scalars import Upload
-from django_graphene_permissions import permissions_checker
+from django_graphene_permissions import  permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
 from ashewa_final.core_perimssions import AdminPermission, VendorsPermission
 from .models import Products, ProductImage, ParentCategory, SubCategory, Category
