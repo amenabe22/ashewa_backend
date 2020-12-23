@@ -125,6 +125,8 @@ class Affilate(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.Model)
     affilate_rank = models.ForeignKey(
         Rank, on_delete=models.CASCADE, null=True, blank=True)
+    total_teams = models.BigIntegerField(null=True, blank=True)
+    total_pv = models.BigIntegerField(null=True, blank=True)
     created_timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):

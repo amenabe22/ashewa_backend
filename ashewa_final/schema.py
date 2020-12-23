@@ -37,6 +37,7 @@ class Query(graphene.ObjectType):
     sub_cats = graphene.List(SubCatsType)
     all_marketing_plans = graphene.Field(
         CorePlanPaginatedType, page_size=graphene.Int(), page=graphene.Int())
+    any_marketing_plans = graphene.List(CoreMarketingPlanTypes)
     vendor_products = graphene.Field(
         ProductsPaginatedType, page=graphene.Int(), page_size=graphene.Int())
     user_data = graphene.List(UsersDataType)
@@ -51,6 +52,79 @@ class Query(graphene.ObjectType):
     store_vendor_plan = graphene.List(VendorPlanType)
     store_meta_data = graphene.List(VendorType, store=graphene.String())
     get_lines = graphene.List(LinesDataType, plan=graphene.String())
+    get_plan_detail = graphene.List(AffilatePlansType, plan=graphene.String())
+    pull_data = graphene.String()
+
+    def resolve_pull_data(self, info):
+        testAff = Affilate.objects.filter(user=info.context.user)
+        plan = CoreLevelPlans.objects.get(
+            core_id="8f51d390-0d31-41ba-94ad-1cbda0b09500")
+        net = UniLevelMarketingNetworkManager(
+            planid="8f51d390-0d31-41ba-94ad-1cbda0b09500", plan_type="core")
+        affNet = AffilatePlans.objects.filter(
+            affilate=testAff[0], core_plan=plan)
+        print(affNet, "HERE")
+
+        # all_n = net.get_all_nets(info.context.user)
+        firstLevels = net.get_net_by_lvl(net.parse_nets(info.context.user), 1)
+        print(firstLevels, "AGAIN")
+
+        # print(plan.count, "TOTAL SHOULD BE TILL HERE")
+        totalDowns = 0
+        print(plan, info.context.user, "TEST")
+        for i in range(plan.count):
+            if i > 1:
+                allLens = net.get_net_by_lvl(
+                    net.parse_nets(info.context.user), i)
+                print()
+                print(len(allLens), "@@@", allLens, "==> % d" % i)
+                print()
+                totalDowns += len(allLens)
+        print(affNet,"NNNN"*20)
+        print(affNet,"NNNN"*20, totalDowns, len(firstLevels))
+
+        # print(totalDowns,"TOTAL DOWNS")
+        affNet.update(total_direct_referrals=len(
+            firstLevels), total_downline=totalDowns)
+        # print(len(firstLevels))
+        # print("#"*10)
+        # print()
+        # print(len(all_n))
+        # print("#"*10)
+        # print(all_n, affNet)
+        return "HEY THERE"
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_get_plan_detail(self, info, plan):
+        if not AffilatePlans.objects.filter(
+            plan_id=plan
+        ).exists():
+            raise Exception("Affilate plan not found")
+        affplan = AffilatePlans.objects.filter(
+            plan_id=plan
+        )
+        # start of affilateNet data setup
+        # print(affplan[0].core_plan.core_id, "PLAN ID")
+        # net = UniLevelMarketingNetworkManager(
+        #     planid=affplan[0].core_plan.core_id, plan_type="core")
+        # affNet = AffilatePlans.objects.filter(
+        #     affilate=affplan[0].affilate, core_plan=CoreLevelPlans.objects.get(
+        #         core_id=affplan[0].core_plan.core_id
+        #     ))
+        # firstLevels = net.get_net_by_lvl(net.parse_nets(info.context.user), 1)
+
+        # totalDowns = 0
+        # for i in range(affplan[0].core_plan.count):
+        #     if i > 1:
+        #         allLens = net.get_net_by_lvl(
+        #             net.parse_nets(info.context.user), i)
+        #         totalDowns += len(allLens)
+
+        # affNet.update(total_direct_referrals=len(
+        #     firstLevels), total_downline=totalDowns)
+        # end of affilateNet data setup
+        return affplan
+        # here is where the plans data is rendered
 
     def resolve_store_meta_data(self, info, store):
         return Vendor.objects.filter(vendor_id=store)
@@ -126,6 +200,16 @@ class Query(graphene.ObjectType):
                                   page_size, page,
                                   info.context.user,
                                   CorePlanPaginatedType)
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_any_marketing_plans(self, info):
+        qs = CoreLevelPlans.objects.all()
+        # aff = Affilate.objects.get(user=info.context.user)
+        return qs
+        # return get_core_paginator(qs,
+        #                           page_size, page,
+        #                           info.context.user,
+        #                           CorePlanPaginatedType)
 
     @permissions_checker([AdminPermission])
     def resolve_all_users(self, info):

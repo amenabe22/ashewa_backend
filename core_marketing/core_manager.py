@@ -54,17 +54,18 @@ class UniLevelMarketingNetworkManager(object):
         return fin
 
     def get_net_by_lvl(self, nets, cnt):
+        self.setup_plans()
         fin_netpack = []
         for nt in nets:
             if nt['core_level'] == cnt:
-                print(nt['core_level'], cnt)
+                # print(nt['core_level'], cnt)
                 fin_netpack.append(nt)
             # else:
             #     raise Exception("Level not reached yet")
         return fin_netpack
 
     def get_all_nets(self, user: CustomUser):
-        self.setup_plans()
+        # self.setup_plans()
         # DOES return only the first level
         return self.get_net_by_lvl(self.parse_nets(user), 1)
         # return self.parse_nets(user)

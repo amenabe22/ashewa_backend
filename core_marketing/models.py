@@ -40,17 +40,22 @@ class UnilevelNetwork(models.Model):
         return "{} => {}".format(self.affilate.user.username, self.user.username)
 
     def save(self, *args, **kwargs):
+        if self.affilate.user == self.user:
+            return
         if self._state.adding:
             usr = self.affilate.user
-            net = UniLevelMarketingNetworkManager(
-                planid=self.marketing_plan.core_id, plan_type="core")
+            # net = UniLevelMarketingNetworkManager(
+            # planid=self.marketing_plan.core_id, plan_type="core")
             if self.user == usr:
                 return
-            if net.get_max_net(usr) >= self.marketing_plan.count:
-                # TODO keep the exception just incase
-                # raise Exception("Reached beyond the predefined layers limit.")
-                return
+            # self.update_aff_net_data()
+            # if net.get_max_net(usr) >= self.marketing_plan.count:
+            #     # TODO keep the exception just incase
+            #     # raise Exception("Reached beyond the predefined layers limit.")
+            #     return
         super(UnilevelNetwork, self).save(*args, **kwargs)
+
+
 
 
 class Rewards(models.Model):
@@ -125,10 +130,15 @@ class AffilatePlans(models.Model):
         CoreLevelPlans, on_delete=models.CASCADE, null=True, blank=True)
     vendor_plan = models.ForeignKey(
         VendorLevelPlans, on_delete=models.CASCADE, null=True, blank=True)
+    total_earned = models.BigIntegerField(null=True, blank=True, default=0)
+    total_downline = models.BigIntegerField(null=True, blank=True, default=0)
+    total_direct_referrals = models.BigIntegerField(
+        null=True, blank=True, default=0)
+    total_earned_pv = models.BigIntegerField(null=True, blank=True, default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.plan_id)
+        return "{} => {}".format(str(self.plan_id), self.affilate.user.username)
 
 
 class UniLevelMarketingNetworkManager(object):
