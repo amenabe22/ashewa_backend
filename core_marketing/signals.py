@@ -16,17 +16,22 @@ def my_handler(sender, instance, **kwargs):
 
     firstLevels = net.get_net_by_lvl(net.parse_nets(instance.affilate.user), 1)
     # print(firstLevels, "AGAIN")
-
+    allLvl1 = []
     totalDowns = 0
     # print(self.marketing_plan, self.affilate.user, "TEST")
     totalDownUsrs = []
     total_lvl1_income = 0
     total_downline_income_main = 0
-    for i in range(instance.marketing_plan.count):
-        if i > 1:
-            allLens = net.get_net_by_lvl(
-                net.parse_nets(instance.affilate.user), i)
-            print(allLens, i, instance.affilate.user)
+    for j in range(instance.marketing_plan.count):
+        i = j+1
+        # if i > 1:
+        allLens = net.get_net_by_lvl(
+            net.parse_nets(instance.affilate.user), i)
+        # print(len(allLens) > 0, i, "DIDE")
+        # print(instance.affilate.user, "PLEASE")
+        print(allLens, "()"*10, "==>", i)
+        if (len(allLens) > 0) and i > 1:
+            # print(allLens, "BRO", i)
             [totalDownUsrs.append(x['user']) for x in allLens]
             # print("#"*20)
             # print(allLens)
@@ -41,21 +46,33 @@ def my_handler(sender, instance, **kwargs):
                 print(instance.affilate.user.username, "====", "LEVEL {}".format(
                     i), "AMT ", cut_amount_main, " JOINING FEE ", join_fee)
 
-    # pass the downline amounts and update everyone's data i the network
                 # print("CORE LVL 1", cut_lvl1_amount_main)
                 total_downline_income_main += join_fee * cut_amount_main
-                print(total_downline_income_main, "GROWWW")
-                # print("CORE Downline", total_downline_income_main)
+                # print(total_downline_income_main, "GROWWW")
         else:
-            total_lvl1_income += join_fee * instance.marketing_plan.level1_percentage
-            pass
+            for po in allLens:
+                total_lvl1_income += join_fee * instance.marketing_plan.level1_percentage
+
+            # if len(allLens) > 0:
+            #     print(, "REALLY")
+            #     print("this is level one")
+            # total_lvl1_income += join_fee * instance.marketing_plan.level1_percentage
+            # allLvl1.append(total_lvl1_income)
+            # print(i)
+            # print("CORE Downline", total_downline_income_main)
+        # else: print(len(allLens),"DOOO")
+        # # DO LEVEL ONE
+        # else:
+        #     total_lvl1_income += join_fee * instance.marketing_plan.level1_percentage
+        #     pass
     # cut_lvl1_amount_main = join_fee * instance.marketing_plan.level1_percentage
+    print(allLvl1, "!@!!")
     total_earned_main = total_lvl1_income + total_downline_income_main
     print(totalDowns, "Total Downlines")
     affNet.update(total_direct_referrals=len(
         firstLevels), total_downline=totalDowns, total_earned=total_earned_main)
 
-    print(totalDownUsrs,"NIGGGA")
+    print(totalDownUsrs, "NIGGGA")
     for aff in totalDownUsrs:
         usr = CustomUser.objects.filter(username=aff)
         aff = Affilate.objects.filter(user=usr[0])
@@ -74,9 +91,13 @@ def my_handler(sender, instance, **kwargs):
             alltotalDownUsrs = 0
             cut_lvl1_amount = 0
             for i in range(instance.marketing_plan.count):
+                # i = j+1
+
+                allLens = net.get_net_by_lvl(
+                    net.parse_nets(usr[0]), i)
+                # if len(allLens) > 0 and (i > 1):
                 if i > 1:
-                    allLens = net.get_net_by_lvl(
-                        net.parse_nets(usr[0]), i)
+
                     alltotalDownUsrs += len(allLens)
                     # cur amount is the amount they get per that level
                     cut_amount = instance.marketing_plan.__dict__[
@@ -89,7 +110,7 @@ def my_handler(sender, instance, **kwargs):
                 else:
                     # level one for the downs go here
                     cut_lvl1_amount += join_fee * instance.marketing_plan.level1_percentage
-            print(total_lvl1_income,"DOWNS")
+            print(total_lvl1_income, "DOWNS")
             total_downline_income = join_fee * cut_amount
             total_earned = cut_lvl1_amount + total_downline_income
             allAffNets.update(total_direct_referrals=len(
