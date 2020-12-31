@@ -1,17 +1,36 @@
 import re
 import graphene
-from .models import AffilatePlans
 from .types import AffilatePlansType
 from vendors.models import VendorLevelPlans, Vendor
 from vendors.types import VendorPlanType, VendorType
 from accounts.models import Affilate, CoreLevelPlans
 from django_graphene_permissions import permissions_checker
+from .models import AffilatePlans,UnilevelNetwork
 from ashewa_final.core_perimssions import AffilatePermission
-
-
+from django_graphene_permissions.permissions import IsAuthenticated
+from accounts.models import CustomUser
 UUID_PATTERN = re.compile(
     r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
 
+
+class CreateMlmLayer(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        marketing_plan = graphene.String()
+        user = graphene.types.UUID()
+
+    @permissions_checker([AffilatePermission, IsAuthenticated])
+    def mutate(self, info, marketing_plan, user):
+        # TODO implement layers add
+        # user -> uid
+        usr = CustomUser.objects.get(user_id=user)
+        _nnet = UnilevelNetwork.objects.create(
+            # user=usr, affilate=Affilate.objects.get(
+            #     affilate_i
+            # )
+        )
+        return CreateMlmLayer(payload=True)
 
 class AddPlanMutation(graphene.Mutation):
     payload = graphene.Boolean()

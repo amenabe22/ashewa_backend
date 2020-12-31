@@ -42,7 +42,7 @@ INSTALLED_APPS += [
 INSTALLED_APPS += [
     'graphene_django',
     'corsheaders',
-    'channels',
+    # 'channels',
     'graphql_playground'
 ]
 
@@ -76,7 +76,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ashewa_final.wsgi.application'
-ASGI_APPLICATION = "ashewa_final.asgi.application"
+# ASGI_APPLICATION = "ashewa_final.asgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases

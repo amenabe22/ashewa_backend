@@ -25,8 +25,9 @@ from core_marketing.types import(LinesDataType,
 from core_ecommerce.product_mutations import(
     NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import AddPlanMutation
+from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer
 from .utils import recurs_iter
+from core.core_marketing_manager import MlmNetworkManager
 
 
 class Query(graphene.ObjectType):
@@ -40,6 +41,9 @@ class Query(graphene.ObjectType):
     any_marketing_plans = graphene.List(CoreMarketingPlanTypes)
     vendor_products = graphene.Field(
         ProductsPaginatedType, page=graphene.Int(), page_size=graphene.Int())
+    store_products = graphene.Field(
+        ProductsPaginatedType, page=graphene.Int(), page_size=graphene.Int(), store=graphene.String())
+
     user_data = graphene.List(UsersDataType)
     see_gen = graphene.List(SingleNet,
                             #  SingleNetworkLayerType,
@@ -54,6 +58,19 @@ class Query(graphene.ObjectType):
     get_lines = graphene.List(LinesDataType, plan=graphene.String())
     get_plan_detail = graphene.List(AffilatePlansType, plan=graphene.String())
     pull_data = graphene.String()
+    prod_detail = graphene.Field(ProductsType, product=graphene.String())
+    # this is test
+    test = graphene.String()
+
+    def resolve_prod_detail(self, info, product):
+        return Products.objects.get(product_id=product)
+
+    def resolve_test(self, info):
+        man = MlmNetworkManager(plan="8f51d390-0d31-41ba-94ad-1cbda0b09500")
+        # man.read_relation()
+        _t = man.form_tree(info.context.user)
+        print(_t)
+        return "Hey this is some test"
 
     def resolve_pull_data(self, info):
         testAff = Affilate.objects.filter(user=info.context.user)
@@ -80,8 +97,8 @@ class Query(graphene.ObjectType):
                 print(len(allLens), "@@@", allLens, "==> % d" % i)
                 print()
                 totalDowns += len(allLens)
-        print(affNet,"NNNN"*20)
-        print(affNet,"NNNN"*20, totalDowns, len(firstLevels))
+        print(affNet, "NNNN"*20)
+        print(affNet, "NNNN"*20, totalDowns, len(firstLevels))
 
         # print(totalDowns,"TOTAL DOWNS")
         affNet.update(total_direct_referrals=len(
@@ -147,12 +164,20 @@ class Query(graphene.ObjectType):
     def resolve_all_core_plans(self, info):
         return CoreLevelPlans.objects.all()
 
-    @permissions_checker([VendorsPermission])
+    @permissions_checker([VendorsPermission, IsAuthenticated])
     def resolve_vendor_products(self, info, page, page_size):
         qs = Products.objects.filter(
             vendor=Vendor.objects.get(
                 user=info.context.user
             )).order_by('-created_timestamp')
+
+        return get_core_paginator(qs, page_size, page, None, ProductsPaginatedType)
+
+    # @permissions_checker([VendorsPermission, IsAuthenticated])
+    def resolve_store_products(self, info, page, page_size, store):
+        qs = Products.objects.filter(
+            vendor=Vendor.objects.get(vendor_id=store
+                                      )).order_by('-created_timestamp')
 
         return get_core_paginator(qs, page_size, page, None, ProductsPaginatedType)
 
@@ -254,6 +279,9 @@ class Mutations(graphene.ObjectType):
     new_user = NewUserMutation.Field(description="create new user")
     add_plan_mutation = AddPlanMutation.Field(
         description="add a plan for an affilate")
+    create_mlm_layer = CreateMlmLayer.Field(
+        description="Create a new core mlm layer"
+    )
 
 
 schema = graphene.Schema(query=Query, mutation=Mutations)
