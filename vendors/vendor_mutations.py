@@ -1,9 +1,49 @@
 import graphene
-from .models import VendorLevelPlans, Vendor
 from graphene_file_upload.scalars import Upload
 from vendors.models import Vendor, VendorLevelPlans
+from .models import VendorLevelPlans, Vendor, Order, Cart
 from django_graphene_permissions import permissions_checker
 from ashewa_final.core_perimssions import VendorsPermission, AdminPermission
+from django_graphene_permissions.permissions import IsAuthenticated
+from core_ecommerce.models import Products
+
+
+class LoadCart(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        product = graphene.String()
+
+    @permissions_checker([IsAuthenticated])
+    def mutate(self, info, product):
+        try:
+            prd = Products.objects.get(product_id=product)
+            cart = Cart.objects.create(user=info.context.user, product=prd)
+        except Exception as e:
+            raise Exception(e)
+
+        return LoadCart(payload=True)
+
+
+class CreateOrder(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        product = graphene.String()
+
+    @permissions_checker([VendorsPermission, IsAuthenticated])
+    def mutate(self, info, product):
+        # create the order here
+        try:
+            prd = Products.objects.get(product_id=product)
+            Order.objects.create(
+                product=prd, ordered_by=info.context.user,
+                ordered_from=prd.vendor
+            )
+        except Exception as e:
+            raise Exception(str(e))
+
+        return CreateOrder(payload=True)
 
 
 class UpdateStoreCover(graphene.Mutation):
@@ -50,7 +90,7 @@ class CreateVendorPlans(graphene.Mutation):
         level15_percentage = graphene.String()
 
     @permissions_checker([VendorsPermission])
-    def mutate(self, plan_name, plan_description, purchase_bonus,level1_percentage, level2_percentage, level3_percentage,
+    def mutate(self, plan_name, plan_description, purchase_bonus, level1_percentage, level2_percentage, level3_percentage,
                level4_percentage, level5_percentage,
                level6_percentage, level7_percentage, level8_percentage, level9_percentage,
                level10_percentage, level11_percentage,

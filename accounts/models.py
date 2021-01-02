@@ -72,7 +72,7 @@ class CoreLevelPlans(models.Model):
         upload_to='plan/image/', null=True, blank=True)
     show_plan_form = models.BooleanField(default=False)
     plan_description = models.TextField(null=True, blank=True)
-    count = models.IntegerField(max_length=5, default=0, null=True, blank=True)
+    count = models.IntegerField(default=0, null=True, blank=True)
     level1_percentage = models.FloatField(
         default=0.0, null=True, blank=True, help_text="First core level")
     level2_percentage = models.FloatField(default=0.0, null=True, blank=True)

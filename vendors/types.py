@@ -1,6 +1,6 @@
 import graphene
-from .models import Vendor, VendorLevelPlans
 from graphene_django import DjangoObjectType
+from .models import Vendor, VendorLevelPlans, Cart, Order
 
 
 class VendorType(DjangoObjectType):
@@ -27,3 +27,33 @@ class VendorPlanPaginatedType(graphene.ObjectType):
     has_prev = graphene.Boolean()
     objects = graphene.List(VendorValueTypes)
     total = graphene.Int()
+
+
+class OrdersType(DjangoObjectType):
+    class Meta:
+        model = Order
+
+
+class CartsType(DjangoObjectType):
+    class Meta:
+        model = Cart
+
+
+class CartPaginatedType(graphene.ObjectType):
+    page = graphene.Int()
+    pages = graphene.Int()
+    has_next = graphene.Boolean()
+    has_prev = graphene.Boolean()
+    objects = graphene.List(CartsType)
+    total = graphene.Int()
+
+
+class OrdersPaginatedType(graphene.ObjectType):
+    page = graphene.Int()
+    pages = graphene.Int()
+    has_next = graphene.Boolean()
+    has_prev = graphene.Boolean()
+    objects = graphene.List(OrdersType)
+    total = graphene.Int()
+
+

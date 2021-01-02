@@ -2,13 +2,11 @@ import graphql
 import graphene
 import graphql_jwt
 from pprint import pprint
-from .utils import get_core_paginator
 from .admin_mutations import CreateMarketingPlans
-from vendors.models import Vendor, VendorLevelPlans
 from core_ecommerce.types import (
     ProductImageType, ProductsType, ParentCategoryType,
     CategoryType, SubCatsType, ProductsPaginatedType)
-from vendors.vendor_mutations import UpdateStoreCover
+from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
@@ -19,14 +17,16 @@ from core_ecommerce.models import(
     Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
 from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
-from vendors.types import VendorType, VendorPlanType, VendorPlanPaginatedType
+from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType,
+                          OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType)
+from vendors.models import Vendor, VendorLevelPlans, Order, Cart
 from core_marketing.types import(LinesDataType,
                                  CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
 from core_ecommerce.product_mutations import(
     NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
 from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer
-from .utils import recurs_iter
+from .utils import recurs_iter, get_orders_paginator, get_core_paginator
 from core.core_marketing_manager import MlmNetworkManager
 
 
@@ -61,6 +61,23 @@ class Query(graphene.ObjectType):
     prod_detail = graphene.Field(ProductsType, product=graphene.String())
     # this is test
     test = graphene.String()
+    get_vendor_orders = graphene.Field(
+        OrdersPaginatedType, page_size=graphene.Int(), page=graphene.Int())
+    get_carts = graphene.Field(
+        CartPaginatedType, page_size=graphene.Int(), page=graphene.Int())
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_get_carts(self, info, page, page_size):
+        qs = Cart.objects.filter(user=info.context.user)
+        return get_orders_paginator(qs, page_size, page, None, CartPaginatedType)
+
+    @permissions_checker([VendorsPermission, IsAuthenticated])
+    def resolve_get_vendor_orders(self, info, page, page_size):
+        qs = Order.objects.filter(ordered_from=Vendor.objects.get(
+            user=info.context.user
+        )).order_by('-timestamp')
+
+        return get_orders_paginator(qs, page_size, page, None, OrdersPaginatedType)
 
     def resolve_prod_detail(self, info, product):
         return Products.objects.get(product_id=product)
@@ -282,6 +299,11 @@ class Mutations(graphene.ObjectType):
     create_mlm_layer = CreateMlmLayer.Field(
         description="Create a new core mlm layer"
     )
-
+    create_order = CreateOrder.Field(
+        description="Create new order from any vendor product"
+    )
+    load_cart = LoadCart.Field(
+        description="Load products to cart"
+    )
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

@@ -1,6 +1,7 @@
 from django.db import models
 from uuid import uuid4
 from accounts.models import CustomUser
+from django.db import models
 # Create your models here.
 
 
@@ -50,3 +51,38 @@ class VendorLevelPlans(models.Model):
 
     def __str__(self):
         return str(self.plan_name)
+
+
+class Order(models.Model):
+    order_stats = [
+        ('pen', 'Pending Order'),
+        ('cmp', 'Completed Order'),
+        ('can', 'Cancelled Order')
+    ]
+    core_order_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    order_id = models.UUIDField(default=uuid4, editable=False)
+    ordered_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    order_status = models.CharField(max_length=10, choices=order_stats, default='pen')
+
+    def __str__(self):
+        return str(self.core_order_id)
+
+
+class Cart(models.Model):
+    cart_core_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    cart_id = models.UUIDField(
+        default=uuid4, editable=False)
+    user = models.ForeignKey(to='accounts.CustomUser',
+                             on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey(
+        to='core_ecommerce.Products', on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.cart_core_id)
