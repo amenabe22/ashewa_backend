@@ -14,6 +14,9 @@ class VendorPlanType(DjangoObjectType):
         model = VendorLevelPlans
         fields = '__all__'
 
+class VendorOverviewDataType(graphene.ObjectType):
+    val = graphene.String()
+    label = graphene.String()
 
 class VendorValueTypes(graphene.ObjectType):
     val = graphene.List(VendorPlanType)

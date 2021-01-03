@@ -17,7 +17,7 @@ from core_ecommerce.models import(
     Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
 from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
-from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType,
+from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
                           OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart
 from core_marketing.types import(LinesDataType,
@@ -65,6 +65,19 @@ class Query(graphene.ObjectType):
         OrdersPaginatedType, page_size=graphene.Int(), page=graphene.Int())
     get_carts = graphene.Field(
         CartPaginatedType, page_size=graphene.Int(), page=graphene.Int())
+    vendor_data = graphene.List(VendorOverviewDataType)
+
+    @permissions_checker([IsAuthenticated, VendorsPermission])
+    def resolve_vendor_data(self, info):
+        allSold = []
+        vendor = Vendor.objects.get(user=info.context.user)
+        orders = Order.objects.filter(ordered_from=vendor, order_status='cmp')
+        [allSold.append(order.product.selling_price) for order in orders]
+        return [
+            {'label': 'Total Sold',
+             'val': sum(allSold), }, {'label': 'Total Products', 'val': Products.objects.filter(
+                 vendor=vendor
+             ).count()}]
 
     @permissions_checker([IsAuthenticated])
     def resolve_get_carts(self, info, page, page_size):
@@ -305,5 +318,6 @@ class Mutations(graphene.ObjectType):
     load_cart = LoadCart.Field(
         description="Load products to cart"
     )
+
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

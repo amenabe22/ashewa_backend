@@ -18,7 +18,7 @@ class LoadCart(graphene.Mutation):
     def mutate(self, info, product):
         try:
             prd = Products.objects.get(product_id=product)
-            cart = Cart.objects.create(user=info.context.user, product=prd)
+            Cart.objects.create(user=info.context.user, product=prd)
         except Exception as e:
             raise Exception(e)
 
