@@ -123,6 +123,9 @@ class Affilate(models.Model):
     affilate_id = models.UUIDField(
         default=uuid4, editable=False, primary_key=True)
     user = models.OneToOneField(CustomUser, on_delete=models.Model)
+    # test Field
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
     affilate_rank = models.ForeignKey(
         Rank, on_delete=models.CASCADE, null=True, blank=True)
     total_teams = models.BigIntegerField(null=True, blank=True)

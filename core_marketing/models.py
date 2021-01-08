@@ -3,6 +3,7 @@ from django.db import models
 from vendors.models import Vendor, VendorLevelPlans
 from accounts.models import CustomUser, Admin, Affilate, CoreLevelPlans
 # from .core_manager import UniLevelMarketingNetworkManager
+from mptt.models import MPTTModel, TreeForeignKey
 
 
 class Ewallet(models.Model):
@@ -54,8 +55,6 @@ class UnilevelNetwork(models.Model):
             #     # raise Exception("Reached beyond the predefined layers limit.")
             #     return
         super(UnilevelNetwork, self).save(*args, **kwargs)
-
-
 
 
 class Rewards(models.Model):
@@ -258,3 +257,20 @@ class UniLevelMarketingNetworkManager(object):
             [self.planSets[lstIdxs[x-1]].append(fin)
              for fin in self.planSets[lstIdxs[x]]]
         return self.planSets
+
+
+# test networks model for management
+class TestNetwork(models.Model):
+    layer_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    marketing_plan = models.ForeignKey(
+        CoreLevelPlans, on_delete=models.CASCADE, null=True)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, related_name='kids', on_delete=models.CASCADE)
+
+    affilate = models.ForeignKey(
+        Affilate, on_delete=models.CASCADE, null=True)
+    # user is the child
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
+    # level = models.IntegerField(null=True, default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)

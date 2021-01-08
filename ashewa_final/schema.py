@@ -16,7 +16,7 @@ from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(
     Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
-from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
+from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
                           OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart
@@ -25,9 +25,10 @@ from core_marketing.types import(LinesDataType,
 from core_ecommerce.product_mutations import(
     NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer
-from .utils import recurs_iter, get_orders_paginator, get_core_paginator
+from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer, CreateTestLayer
+from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree
 from core.core_marketing_manager import MlmNetworkManager
+from django.forms.models import model_to_dict
 
 
 class Query(graphene.ObjectType):
@@ -66,6 +67,33 @@ class Query(graphene.ObjectType):
     get_carts = graphene.Field(
         CartPaginatedType, page_size=graphene.Int(), page=graphene.Int())
     vendor_data = graphene.List(VendorOverviewDataType)
+
+    parse_tree = graphene.String(net=graphene.String())
+
+    def resolve_parse_tree(self, info, net):
+        net = TestNetwork.objects.get(layer_id=net)
+        # tree = get_net_tree(net)
+        print("@"*20)
+        # print(tree)
+        final_tree = list()
+        # TODO Why we checking for null main
+        for tst in TestNetwork.objects.filter(parent__isnull=True):
+            final_tree.append(get_net_tree(tst))
+        pprint(final_tree)
+        print("@"*20)
+        return "asdf"
+        # pass
+    # def resolve_parse_tree(self, info, affilate):
+    #     affilate = Affilate.objects.get(affilate_id=affilate)
+    #     _tree = get_tree(affilate)
+    #     # final_tree = list()
+    #     # for aff in Affilate.objects.filter(parent__isnull=True):
+    #     #     final_tree.append(get_tree(aff))
+    #     print("_"*100)
+    #     # pprint(final_tree) # TODO use this mptt tree to mine the rest data
+    #     pprint(_tree)
+    #     print("_"*100)
+    #     return "runnning tests in the BG"
 
     @permissions_checker([IsAuthenticated, VendorsPermission])
     def resolve_vendor_data(self, info):
@@ -318,6 +346,8 @@ class Mutations(graphene.ObjectType):
     load_cart = LoadCart.Field(
         description="Load products to cart"
     )
+    # Create test layer
+    create_tlayer = CreateTestLayer.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

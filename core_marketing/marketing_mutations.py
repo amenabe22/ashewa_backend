@@ -5,12 +5,45 @@ from vendors.models import VendorLevelPlans, Vendor
 from vendors.types import VendorPlanType, VendorType
 from accounts.models import Affilate, CoreLevelPlans
 from django_graphene_permissions import permissions_checker
-from .models import AffilatePlans,UnilevelNetwork
+from .models import AffilatePlans, UnilevelNetwork
 from ashewa_final.core_perimssions import AffilatePermission
 from django_graphene_permissions.permissions import IsAuthenticated
 from accounts.models import CustomUser
+from core_marketing.models import TestNetwork
 UUID_PATTERN = re.compile(
     r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
+
+
+class CreateTestLayer(graphene.Mutation):
+    payload = graphene.String()
+    # create a new layer and form a valid ogg tree
+
+    class Arguments:
+        affilate = graphene.String()
+        plan = graphene.String()
+
+    def mutate(self, info, affilate, plan):
+        try:
+            plan = CoreLevelPlans.objects.get(core_id=plan)
+            aff = Affilate.objects.get(affilate_id=affilate)
+            # find the parent of the affilate that brought this user
+            tstParent = TestNetwork.objects.filter(
+                user=aff.user, marketing_plan=plan)
+            print("DEBUG")
+            print(tstParent)
+            print("DEBUG")
+            # first find the parent for this relation
+            if tstParent.exists():
+                # layer if there is an ancestory relation
+                layer = TestNetwork.objects.create(
+                    parent=tstParent[0], marketing_plan=plan, affilate=aff, user=info.context.user)
+            else:
+                # Set None parent to the first user in the net work
+                layer = TestNetwork.objects.create(
+                    parent=None, marketing_plan=plan, affilate=aff, user=info.context.user)
+        except Exception as e:
+            raise Exception(str(e))
+        return CreateTestLayer(payload=str(layer.layer_id))
 
 
 class CreateMlmLayer(graphene.Mutation):
@@ -31,6 +64,7 @@ class CreateMlmLayer(graphene.Mutation):
             # )
         )
         return CreateMlmLayer(payload=True)
+
 
 class AddPlanMutation(graphene.Mutation):
     payload = graphene.Boolean()
@@ -60,9 +94,8 @@ class AddPlanMutation(graphene.Mutation):
             if not qs.exists():
                 raise Exception("vend plan not found")
 
-
         if plan_type == "core":
-            print(qs[0],"!"*200)
+            print(qs[0], "!"*200)
             AffilatePlans.objects.create(
                 core_plan=qs[0],
                 plan_type="core",
@@ -78,7 +111,7 @@ class AddPlanMutation(graphene.Mutation):
                     user=info.context.user
                 )
             )
-        
+
         # except Exception as e:
         #     raise str(e)
 

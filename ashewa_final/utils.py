@@ -6,6 +6,7 @@ from vendors.models import VendorLevelPlans
 from core_marketing.models import CoreLevelPlans
 from core_marketing.models import AffilatePlans
 from collections import abc
+from django.forms.models import model_to_dict
 
 
 def recurs_iter(nested):
@@ -155,3 +156,25 @@ def get_core_paginator(qs, page_size, page, usr, paginated_type, **kwargs):
         objects=page_obj.object_list,
         **kwargs
     )
+
+
+# def get_tree(affilate):
+#     tree = model_to_dict(affilate, fields=['user', 'parent'])
+#     if affilate.children.all().exists():
+#         children = list()
+#         for child in affilate.children.all():
+#             children.append(get_tree(child))
+#         tree['children'] = children
+#     return tree
+
+
+def get_net_tree(net):
+    tree = model_to_dict(net, fields=['affilate', 'user'])
+    print(net,"!"*20)
+    if net.kids.all().exists():
+        print("All kids are there")
+        children = list()
+        for child in net.kids.all():
+            children.append(get_net_tree(child))
+        tree['children'] = children
+    return tree
