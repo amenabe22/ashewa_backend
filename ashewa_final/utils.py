@@ -7,6 +7,7 @@ from core_marketing.models import CoreLevelPlans
 from core_marketing.models import AffilatePlans
 from collections import abc
 from django.forms.models import model_to_dict
+from pprint import pprint
 
 
 def recurs_iter(nested):
@@ -169,12 +170,35 @@ def get_core_paginator(qs, page_size, page, usr, paginated_type, **kwargs):
 
 
 def get_net_tree(net):
-    tree = model_to_dict(net, fields=['affilate', 'user'])
-    print(net,"!"*20)
+    tree = model_to_dict(net, fields=['affilate', 'user', 'marketing_plan'])
+    tree = net.__dict__
+
     if net.kids.all().exists():
-        print("All kids are there")
         children = list()
         for child in net.kids.all():
             children.append(get_net_tree(child))
         tree['children'] = children
+
     return tree
+
+
+def manage_data(net):
+    for idx, x in enumerate(net):
+        if 'children' in x.keys():
+            manage_data(x['children'])
+            for kd in x['children']:
+                # print("_"*100)
+                plan = CoreLevelPlans.objects.get(
+                    core_id=kd['marketing_plan_id'])
+                if (idx+1) <= plan.count:
+                    affilate = Affilate.objects.get(
+                        affilate_id=kd['affilate_id'])
+                    print(plan, affilate)
+
+                # print(Affilate.objects.get(affilate_id=kd['affilate_id']))
+                # print("_"*100)
+            # print("#"*120)
+            # print(x['children'])
+            # print("#"*120)
+        else:
+            pass

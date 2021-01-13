@@ -9,7 +9,7 @@ class LvlAdmin(admin.ModelAdmin):
 
 
 class LayerAdmin(admin.ModelAdmin):
-    list_display = ('marketing_plan', 'affilate', 'user', 'parent')
+    list_display = ('marketing_plan', 'affilate', 'user', 'parent','layer_id',)
     pass
 
     # list_editable = ('affilate',)

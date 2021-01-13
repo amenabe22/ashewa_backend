@@ -20,15 +20,17 @@ from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
                           OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart
-from core_marketing.types import(LinesDataType,
+from core_marketing.types import(LinesDataType, CoreVendDataType,
                                  CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
 from core_ecommerce.product_mutations import(
     NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
 from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer, CreateTestLayer
-from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree
+from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
 from django.forms.models import model_to_dict
+from django.db.models import Count
+from django.db.models.functions import ExtractDay
 
 
 class Query(graphene.ObjectType):
@@ -69,37 +71,49 @@ class Query(graphene.ObjectType):
     vendor_data = graphene.List(VendorOverviewDataType)
 
     parse_tree = graphene.String(net=graphene.String())
+    core_vend_data = graphene.List(CoreVendDataType, year=graphene.Int(), month=graphene.Int())
 
+    @permissions_checker([IsAuthenticated])
+    def resolve_core_vend_data(self, info, year, month):
+        vend = Vendor.objects.filter(user=info.context.user)
+        # print(vend)
+        totalSold = Order.objects.filter(
+            ordered_from=vend[0], order_status='cmp')
+        tq = totalSold.filter(timestamp__year=year,
+                              timestamp__month=month
+                              ).annotate(
+            day=ExtractDay('timestamp'),
+        ).values(
+            'day'
+        ).annotate(
+            n=Count('pk')
+        ).order_by('day')
+        print(tq)
+        return tq
     def resolve_parse_tree(self, info, net):
-        net = TestNetwork.objects.get(layer_id=net)
+        net = TestNetwork.objects.filter(layer_id=net)
         # tree = get_net_tree(net)
-        print("@"*20)
+        # print("@"*20)
+        # print(net, "FO REAL")
         # print(tree)
         final_tree = list()
         # TODO Why we checking for null main
-        for tst in TestNetwork.objects.filter(parent__isnull=True):
+        # for tst in TestNetwork.objects.filter(parent__isnull=True):
+        for tst in net:
             final_tree.append(get_net_tree(tst))
-        pprint(final_tree)
+        # pprint(final_tree)
         print("@"*20)
-        return "asdf"
-        # pass
-    # def resolve_parse_tree(self, info, affilate):
-    #     affilate = Affilate.objects.get(affilate_id=affilate)
-    #     _tree = get_tree(affilate)
-    #     # final_tree = list()
-    #     # for aff in Affilate.objects.filter(parent__isnull=True):
-    #     #     final_tree.append(get_tree(aff))
-    #     print("_"*100)
-    #     # pprint(final_tree) # TODO use this mptt tree to mine the rest data
-    #     pprint(_tree)
-    #     print("_"*100)
-    #     return "runnning tests in the BG"
+        # manage_data(final_tree)
+        print("@"*20)
+        # print("@"*20)
+        return "runnning tests in the BG"
 
-    @permissions_checker([IsAuthenticated, VendorsPermission])
+    @ permissions_checker([IsAuthenticated, VendorsPermission])
     def resolve_vendor_data(self, info):
         allSold = []
         vendor = Vendor.objects.get(user=info.context.user)
-        orders = Order.objects.filter(ordered_from=vendor, order_status='cmp')
+        orders = Order.objects.filter(
+            ordered_from=vendor, order_status='cmp')
         [allSold.append(order.product.selling_price) for order in orders]
         return [
             {'label': 'Total Sold',
@@ -107,12 +121,12 @@ class Query(graphene.ObjectType):
                  vendor=vendor
              ).count()}]
 
-    @permissions_checker([IsAuthenticated])
+    @ permissions_checker([IsAuthenticated])
     def resolve_get_carts(self, info, page, page_size):
         qs = Cart.objects.filter(user=info.context.user)
         return get_orders_paginator(qs, page_size, page, None, CartPaginatedType)
 
-    @permissions_checker([VendorsPermission, IsAuthenticated])
+    @ permissions_checker([VendorsPermission, IsAuthenticated])
     def resolve_get_vendor_orders(self, info, page, page_size):
         qs = Order.objects.filter(ordered_from=Vendor.objects.get(
             user=info.context.user
@@ -169,7 +183,7 @@ class Query(graphene.ObjectType):
         # print(all_n, affNet)
         return "HEY THERE"
 
-    @permissions_checker([IsAuthenticated])
+    @ permissions_checker([IsAuthenticated])
     def resolve_get_plan_detail(self, info, plan):
         if not AffilatePlans.objects.filter(
             plan_id=plan
@@ -204,7 +218,7 @@ class Query(graphene.ObjectType):
     def resolve_store_meta_data(self, info, store):
         return Vendor.objects.filter(vendor_id=store)
 
-    @permissions_checker([VendorsPermission])
+    @ permissions_checker([VendorsPermission])
     def resolve_store_vendor_plan(self, info):
         return VendorLevelPlans.objects.filter(
             creator=Vendor.objects.get(
@@ -212,17 +226,17 @@ class Query(graphene.ObjectType):
             )
         )
 
-    @permissions_checker([AffilatePermission])
+    @ permissions_checker([AffilatePermission])
     def resolve_affilate_plans(self, info):
         return AffilatePlans.objects.filter(
             affilate=Affilate.objects.get(user=info.context.user)
         )
 
-    @permissions_checker([IsAuthenticated])
+    @ permissions_checker([IsAuthenticated])
     def resolve_all_core_plans(self, info):
         return CoreLevelPlans.objects.all()
 
-    @permissions_checker([VendorsPermission, IsAuthenticated])
+    @ permissions_checker([VendorsPermission, IsAuthenticated])
     def resolve_vendor_products(self, info, page, page_size):
         qs = Products.objects.filter(
             vendor=Vendor.objects.get(
@@ -239,13 +253,13 @@ class Query(graphene.ObjectType):
 
         return get_core_paginator(qs, page_size, page, None, ProductsPaginatedType)
 
-    @permissions_checker([IsAuthenticated])
+    @ permissions_checker([IsAuthenticated])
     def resolve_all_vendor_plans(self, info, page_size, page):
         qs = VendorLevelPlans.objects.all()
         return get_core_paginator(qs, page_size, page, info.context.user, VendorPlanPaginatedType)
         # return VendorLevelPlans.objects.all()
 
-    @permissions_checker([AffilatePermission])
+    @ permissions_checker([AffilatePermission])
     def resolve_get_gen(self, info, plan):
         network_manager = UniLevelMarketingNetworkManager(
             planid=plan, plan_type="core"
@@ -256,7 +270,7 @@ class Query(graphene.ObjectType):
         fin = network_manager.get_all_nets(user=info.context.user)
         return fin
 
-    @permissions_checker([AffilatePermission])
+    @ permissions_checker([AffilatePermission])
     def resolve_see_gen(self, info, plan):
         network_manager = UniLevelMarketingNetworkManager(
             planid=plan, plan_type="core"
@@ -264,17 +278,17 @@ class Query(graphene.ObjectType):
         fin = network_manager.get_all_nets(user=info.context.user)
         return fin
 
-    @permissions_checker([IsAuthenticated])
+    @ permissions_checker([IsAuthenticated])
     def resolve_layers_data(self, info):
         return UnilevelNetwork.objects.all()
 
-    @permissions_checker([IsAuthenticated])
+    @ permissions_checker([IsAuthenticated])
     def resolve_user_data(self, info):
         print(info.context.user)
         return CustomUser.objects.filter(
             user_id=info.context.user.user_id)
 
-    @permissions_checker([AffilatePermission])
+    @ permissions_checker([AffilatePermission])
     def resolve_all_marketing_plans(self, info, page_size, page):
         qs = CoreLevelPlans.objects.all()
         # aff = Affilate.objects.get(user=info.context.user)
@@ -284,7 +298,7 @@ class Query(graphene.ObjectType):
                                   info.context.user,
                                   CorePlanPaginatedType)
 
-    @permissions_checker([IsAuthenticated])
+    @ permissions_checker([IsAuthenticated])
     def resolve_any_marketing_plans(self, info):
         qs = CoreLevelPlans.objects.all()
         # aff = Affilate.objects.get(user=info.context.user)
@@ -294,7 +308,7 @@ class Query(graphene.ObjectType):
         #                           info.context.user,
         #                           CorePlanPaginatedType)
 
-    @permissions_checker([AdminPermission])
+    @ permissions_checker([AdminPermission])
     def resolve_all_users(self, info):
         return CustomUser.objects.all()
 
@@ -307,11 +321,11 @@ class Query(graphene.ObjectType):
     def resolve_sub_cats(self, info):
         return SubCategory.objects.all()
 
-    @permissions_checker([VendorsPermission])
+    @ permissions_checker([VendorsPermission])
     def resolve_data(self, info):
         return Vendor.objects.filter(user=info.context.user)
 
-    @permissions_checker([AffilatePermission])
+    @ permissions_checker([AffilatePermission])
     def resolve_get_lines(self, info, plan):
         network_manager = UniLevelMarketingNetworkManager(
             planid=plan, plan_type="core"

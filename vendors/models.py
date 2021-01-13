@@ -66,7 +66,7 @@ class Order(models.Model):
     ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     product = models.ForeignKey(
         to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=True, editable=True, null=True)
     order_status = models.CharField(max_length=10, choices=order_stats, default='pen')
 
     def __str__(self):

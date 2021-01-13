@@ -5,6 +5,10 @@ from accounts.types import AffilateType, CoreUsersType
 from .models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
 
 
+class CoreVendDataType(graphene.ObjectType):
+    day = graphene.String()
+    n = graphene.String()
+
 class CoreMarketingPlanTypes(DjangoObjectType):
     class Meta:
         model = CoreLevelPlans

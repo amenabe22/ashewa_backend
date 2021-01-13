@@ -13,7 +13,6 @@ from core_marketing.models import TestNetwork
 UUID_PATTERN = re.compile(
     r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
 
-
 class CreateTestLayer(graphene.Mutation):
     payload = graphene.String()
     # create a new layer and form a valid ogg tree
