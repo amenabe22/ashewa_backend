@@ -4,6 +4,8 @@ from graphene_django import DjangoObjectType
 from accounts.types import AffilateType, CoreUsersType
 from .models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
 
+class AllProductsType(graphene.ObjectType):
+    pass 
 
 class CoreVendDataType(graphene.ObjectType):
     day = graphene.String()

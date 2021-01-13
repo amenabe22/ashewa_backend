@@ -34,6 +34,8 @@ from django.db.models.functions import ExtractDay
 
 
 class Query(graphene.ObjectType):
+    all_products = graphene.Field(
+        ProductsPaginatedType, page_size=graphene.Int(), page=graphene.Int())
     data = graphene.List(VendorType)
     parent_cats = graphene.List(ParentCategoryType)
     cats = graphene.List(CategoryType)
@@ -71,7 +73,13 @@ class Query(graphene.ObjectType):
     vendor_data = graphene.List(VendorOverviewDataType)
 
     parse_tree = graphene.String(net=graphene.String())
-    core_vend_data = graphene.List(CoreVendDataType, year=graphene.Int(), month=graphene.Int())
+    core_vend_data = graphene.List(
+        CoreVendDataType, year=graphene.Int(), month=graphene.Int())
+
+    def resolve_all_products(self, info, page_size, page):
+        qs = Products.objects.all().order_by('-created_timestamp')
+
+        return get_core_paginator(qs, page_size, page, None, ProductsPaginatedType)
 
     @permissions_checker([IsAuthenticated])
     def resolve_core_vend_data(self, info, year, month):
@@ -90,6 +98,7 @@ class Query(graphene.ObjectType):
         ).order_by('day')
         print(tq)
         return tq
+
     def resolve_parse_tree(self, info, net):
         net = TestNetwork.objects.filter(layer_id=net)
         # tree = get_net_tree(net)
