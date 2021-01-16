@@ -78,6 +78,10 @@ class Query(graphene.ObjectType):
     landing_cars = graphene.List(LandingCarsType)
     landing_cat_block = graphene.List(
         LandingCatBlockType, count=graphene.Int())
+    prod_search = graphene.List(ProductsType, query=graphene.String())
+
+    def resolve_prod_search(self, info, query):
+        return Products.objects.filter(product_name__contains=query)
 
     def resolve_landing_cat_block(self, info, count):
         fin = []
@@ -95,7 +99,7 @@ class Query(graphene.ObjectType):
             print("@"*30, count)
 
         for pcs in all_pcats:
-            # filter products per that specific category 
+            # filter products per that specific category
             pcProds = Products.objects.filter(
                 product_parent_category=pcs
             )[:6]
