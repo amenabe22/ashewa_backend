@@ -3,9 +3,9 @@ import graphene
 import graphql_jwt
 from pprint import pprint
 from .admin_mutations import CreateMarketingPlans
-from core_ecommerce.types import (
-    ProductImageType, ProductsType, ParentCategoryType,
-    CategoryType, SubCatsType, ProductsPaginatedType)
+from core_ecommerce.types import (LandingCarsType, LandingCatBlockType,
+                                  ProductImageType, ProductsType, ParentCategoryType,
+                                  CategoryType, SubCatsType, ProductsPaginatedType)
 from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
@@ -13,8 +13,8 @@ from django_graphene_permissions.permissions import IsAuthenticated
 from accounts.account_mutations import NewUserMutation
 from accounts.types import CoreUsersType, UsersDataType
 from accounts.models import CustomUser, Affilate
-from core_ecommerce.models import(
-    Products, ProductImage, ParentCategory, Category, SubCategory)
+from core_ecommerce.models import(LandingCarousel,
+                                  Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
 from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
@@ -75,13 +75,43 @@ class Query(graphene.ObjectType):
     parse_tree = graphene.String(net=graphene.String())
     core_vend_data = graphene.List(
         CoreVendDataType, year=graphene.Int(), month=graphene.Int())
+    landing_cars = graphene.List(LandingCarsType)
+    landing_cat_block = graphene.List(
+        LandingCatBlockType, count=graphene.Int())
+
+    def resolve_landing_cat_block(self, info, count):
+        fin = []
+        all_pcats = []
+        pcatSet = [{'pcat': None, 'pcatProds': []}]
+        allPcats = ParentCategory.objects.all()
+        if not(allPcats.count() > 0):
+            raise Exception("not pcats registered")
+        if count > allPcats.count():
+            all_pcats = allPcats[:count]
+        else:
+            all_pcats = allPcats.order_by(
+                '-created_timestamp')[:count]
+            print(all_pcats)
+            print("@"*30, count)
+
+        for pcs in all_pcats:
+            # filter products per that specific category 
+            pcProds = Products.objects.filter(
+                product_parent_category=pcs
+            )[:6]
+            fin.append({'pcat': pcs, 'catProds': pcProds})
+
+        return fin
+
+    def resolve_landing_cars(self, info):
+        return LandingCarousel.objects.all()
 
     def resolve_all_products(self, info, page_size, page):
         qs = Products.objects.all().order_by('-created_timestamp')
 
         return get_core_paginator(qs, page_size, page, None, ProductsPaginatedType)
 
-    @permissions_checker([IsAuthenticated])
+    @ permissions_checker([IsAuthenticated])
     def resolve_core_vend_data(self, info, year, month):
         vend = Vendor.objects.filter(user=info.context.user)
         # print(vend)

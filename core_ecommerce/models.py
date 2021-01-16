@@ -10,6 +10,9 @@ class ParentCategory(models.Model):
     parent_cat_name = models.CharField(max_length=500)
     brand = models.ForeignKey(CoreBrand, on_delete=models.CASCADE)
     created_timestamp = models.DateTimeField(auto_now_add=True, null=True)
+    cat_decs = models.TextField(null=True, blank=True)
+    cat_image = models.ImageField(
+        upload_to='pcat-image/', null=True, blank=True)
 
     def __str__(self):
         return self.parent_cat_name
@@ -71,3 +74,12 @@ class Products(models.Model):
     def __str__(self):
         return self.product_name
 
+
+class LandingCarousel(models.Model):
+    car_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    image = models.ImageField(upload_to='landing/car')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.car_id)

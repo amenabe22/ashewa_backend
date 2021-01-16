@@ -1,14 +1,23 @@
 import graphene
 from graphene_django import DjangoObjectType
-from .models import ProductImage, Products, ParentCategory, Category, SubCategory
+from .models import(ProductImage, Products, ParentCategory,
+                    Category, SubCategory, LandingCarousel, ParentCategory)
+
+
+class LandingCarsType(DjangoObjectType):
+    class Meta:
+        model = LandingCarousel
+
 
 class ParentCategoryType(DjangoObjectType):
     class Meta:
         model = ParentCategory
 
+
 class CategoryType(DjangoObjectType):
     class Meta:
         model = Category
+
 
 class ProductImageType(DjangoObjectType):
     class Meta:
@@ -25,9 +34,11 @@ class ProductsType(DjangoObjectType):
     class Meta:
         model = Products
 
+
 class SubCatsType(DjangoObjectType):
     class Meta:
         model = SubCategory
+
 
 class ProductsPaginatedType(graphene.ObjectType):
     page = graphene.Int()
@@ -36,3 +47,8 @@ class ProductsPaginatedType(graphene.ObjectType):
     has_prev = graphene.Boolean()
     objects = graphene.List(ProductsType)
     total = graphene.Int()
+
+
+class LandingCatBlockType(graphene.ObjectType):
+    pcat = graphene.Field(ParentCategoryType)
+    catProds = graphene.List(ProductsType)
