@@ -79,6 +79,28 @@ class Query(graphene.ObjectType):
     landing_cat_block = graphene.List(
         LandingCatBlockType, count=graphene.Int())
     prod_search = graphene.List(ProductsType, query=graphene.String())
+    filter_prods = graphene.Field(ProductsPaginatedType, pcat=graphene.String(
+    ), page=graphene.Int(), page_size=graphene.Int(), ranged=graphene.Boolean(), minP=graphene.Int(), maxP=graphene.Int())
+
+    def resolve_filter_prods(self, info, pcat, page_size, page, minP, maxP, ranged):
+        if pcat is not None:
+            try:
+                # check ranged status
+                if ranged:
+                    qs = Products.objects.filter(product_parent_category=ParentCategory.objects.get(
+                        pcat_id=pcat, selling_price__range=(minP, maxP),
+                    )).order_by('-created_timestamp')
+                else:
+                    # return cat filtered if not ranged
+                    qs = Products.objects.filter(product_parent_category=ParentCategory.objects.get(
+                        pcat_id=pcat,
+                    )).order_by('-created_timestamp')
+            except Exception as e:
+                qs = Products.objects.all().order_by('-created_timestamp')
+        else:
+            qs = Products.objects.all().order_by('-created_timestamp')
+
+        return get_core_paginator(qs, page_size, page, None, ProductsPaginatedType)
 
     def resolve_prod_search(self, info, query):
         return Products.objects.filter(product_name__contains=query)
