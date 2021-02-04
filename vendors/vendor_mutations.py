@@ -1,7 +1,7 @@
 import graphene
 from graphene_file_upload.scalars import Upload
 from vendors.models import Vendor, VendorLevelPlans
-from .models import VendorLevelPlans, Vendor, Order, Cart
+from .models import VendorLevelPlans, Vendor, Order, Cart, VenodrGallery
 from django_graphene_permissions import permissions_checker
 from ashewa_final.core_perimssions import VendorsPermission, AdminPermission
 from django_graphene_permissions.permissions import IsAuthenticated
@@ -97,3 +97,16 @@ class CreateVendorPlans(graphene.Mutation):
                level12_percentage, level13_percentage, level14_percentage, level15_percentage):
         pass
         return CreateVendorPlans(payload=True)
+
+# class CreateVenodrGallery(graphene.Mutation):
+#     payload = graphene.Boolean()
+
+#     class Arguments:
+#         image = Upload()
+#         img_desc = graphene.String()
+        
+#         @permissions_checker([VendorsPermission])
+#         def mutate(self, info, image, img_desc):
+#             vendG = VenodrGallery.objects.all()
+#             vendG.image = image
+#             img_desc = img_desc

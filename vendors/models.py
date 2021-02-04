@@ -4,6 +4,9 @@ from accounts.models import CustomUser
 from django.db import models
 # Create your models here.
 
+class VenodrGallery(models.Model):
+    image = models.ImageField(upload_to='venodr/gallery')
+    img_desc = models.TextField(null=True, blank=True)
 
 class Vendor(models.Model):
     vendor_id = models.UUIDField(
@@ -13,6 +16,7 @@ class Vendor(models.Model):
     store_desc = models.TextField(blank=True, null=True)
     store_cover = models.ImageField(
         upload_to='store/image', null=True, blank=True)
+    store_gallery=models.ManyToManyField(VenodrGallery, blank=True)
     created_timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

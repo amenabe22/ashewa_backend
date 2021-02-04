@@ -18,8 +18,8 @@ from core_ecommerce.models import(LandingCarousel,
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
 from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
-                          OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType)
-from vendors.models import Vendor, VendorLevelPlans, Order, Cart
+                          OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType)
+from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery
 from core_marketing.types import(LinesDataType, CoreVendDataType,
                                  CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
 from core_ecommerce.product_mutations import(
@@ -34,6 +34,7 @@ from django.db.models.functions import ExtractDay
 
 
 class Query(graphene.ObjectType):
+    venodr_gallery = graphene.List(VenodrGalleryType, store=graphene.String())
     all_products = graphene.Field(
         ProductsPaginatedType, page_size=graphene.Int(), page=graphene.Int())
     data = graphene.List(VendorType)
@@ -81,6 +82,9 @@ class Query(graphene.ObjectType):
     prod_search = graphene.List(ProductsType, query=graphene.String())
     filter_prods = graphene.Field(ProductsPaginatedType, pcat=graphene.String(
     ), page=graphene.Int(), page_size=graphene.Int(), ranged=graphene.Boolean(), minP=graphene.Int(), maxP=graphene.Int())
+
+    def resolve_venodr_gallery(self, info, store):
+        return Vendor.objects.get(vendor_id=store).store_gallery.all()
 
     def resolve_filter_prods(self, info, pcat, page_size, page, minP, maxP, ranged):
         if pcat is not None:

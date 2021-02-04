@@ -1,7 +1,11 @@
 import graphene
 from graphene_django import DjangoObjectType
-from .models import Vendor, VendorLevelPlans, Cart, Order
+from .models import Vendor, VendorLevelPlans, Cart, Order, VenodrGallery
 
+class VenodrGalleryType(DjangoObjectType):
+    class Meta:
+        model = VenodrGallery
+        fields = '__all__'
 
 class VendorType(DjangoObjectType):
     class Meta:
