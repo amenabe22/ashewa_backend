@@ -10,6 +10,11 @@ from graphql_jwt.decorators import jwt_cookie
 # from graphql_ws.django_channels import GraphQLSubscriptionConsumer
 from core_marketing.views import getGen
 from graphql_playground.views import GraphQLPlaygroundView
+from django.views.generic import TemplateView
+
+
+class Home(TemplateView):
+    template_name = "index.html"
 
 
 class GqlView(FileUploadGraphQLView, LoginRequiredMixin):
@@ -21,7 +26,7 @@ urlpatterns = [
     path('graphql/',  csrf_exempt(jwt_cookie(GqlView.as_view(graphiql=True)))),
     path('rel/<str:plan>/', getGen),
     path('playground/', GraphQLPlaygroundView.as_view(endpoint="/graphql/")),
-
+    path('', Home.as_view())
 ]
 
 
