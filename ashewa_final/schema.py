@@ -16,11 +16,11 @@ from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(LandingCarousel,
                                   Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
-from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork
+from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork, UserMessages, CoreDocs
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
                           OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery
-from core_marketing.types import(LinesDataType, CoreVendDataType,
+from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTyoe, CoreDocsType,
                                  CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
 from core_ecommerce.product_mutations import(
     NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
@@ -31,6 +31,26 @@ from core.core_marketing_manager import MlmNetworkManager
 from django.forms.models import model_to_dict
 from django.db.models import Count
 from django.db.models.functions import ExtractDay
+
+# rushed to doing this
+
+
+class CreateUserMessage(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        full_name = graphene.String()
+        email = graphene.String()
+        message = graphene.String()
+
+    def mutate(self, info, full_name, email, message):
+        try:
+            UserMessages.objects.create(
+                full_name=full_name, email=email, message=message
+            )
+        except Exception as e:
+            raise Exception(str(e))
+        return CreateUserMessage(payload=True)
 
 
 class Query(graphene.ObjectType):
@@ -82,6 +102,11 @@ class Query(graphene.ObjectType):
     prod_search = graphene.List(ProductsType, query=graphene.String())
     filter_prods = graphene.Field(ProductsPaginatedType, pcat=graphene.String(
     ), page=graphene.Int(), page_size=graphene.Int(), ranged=graphene.Boolean(), minP=graphene.Int(), maxP=graphene.Int())
+    # please delete me
+    get_core_docs = graphene.List(CoreDocsType)
+
+    def resolve_get_core_docs(self, info):
+        return CoreDocs.objects.all()
 
     def resolve_venodr_gallery(self, info, store):
         return Vendor.objects.get(vendor_id=store).store_gallery.all()
@@ -431,6 +456,9 @@ class Mutations(graphene.ObjectType):
     )
     # Create test layer
     create_tlayer = CreateTestLayer.Field()
+    user_message = CreateUserMessage.Field(
+        description="User Message about coming soon page ..."
+    )
 
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

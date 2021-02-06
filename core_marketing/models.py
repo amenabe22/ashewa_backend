@@ -274,3 +274,19 @@ class TestNetwork(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
     # level = models.IntegerField(null=True, default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+
+class UserMessages(models.Model):
+    full_name = models.CharField(max_length=800)
+    email = models.EmailField()
+    message = models.TextField()
+
+    def __str__(self):
+        return self.email
+
+class CoreDocs(models.Model):
+    name = models.CharField(max_length=300)
+    doc = models.FileField(upload_to='core/docs')
+
+    def __str__(self):
+        return self.name

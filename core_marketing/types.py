@@ -2,8 +2,16 @@ import graphene
 from accounts.models import Affilate
 from graphene_django import DjangoObjectType
 from accounts.types import AffilateType, CoreUsersType
-from .models import CoreLevelPlans, UnilevelNetwork, AffilatePlans
+from .models import CoreLevelPlans, UnilevelNetwork, AffilatePlans,UserMessages,CoreDocs
 
+class CoreDocsType(DjangoObjectType):
+    class Meta:
+        model = CoreDocs
+
+class UserMessagesTyoe(graphene.ObjectType):
+    class Meta:
+        model = UserMessages
+        
 class AllProductsType(graphene.ObjectType):
     pass 
 
