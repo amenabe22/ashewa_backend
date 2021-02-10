@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import(CoreLevelPlans, CoreBrand, Ewallet, UnilevelNetwork, UserMessages,
+from .models import(CoreLevelPlans, CoreBrand, Ewallet, UnilevelNetwork, UserMessages, Marketingwallet,
                     Rewards, PayoutReport, DepositReport, AffilatePlans, TestNetwork, CoreDocs,
                     CoreTestMpttNode, CoreMlmOrders, CoreVendorMlmOrders, BillingInfo)
 from accounts.models import Rank
@@ -26,6 +26,8 @@ class UserMessagesAdmin(admin.ModelAdmin):
 admin.site.register(CoreLevelPlans)
 admin.site.register(CoreBrand)
 admin.site.register(Ewallet)
+admin.site.register(Marketingwallet
+                    )
 admin.site.register(UnilevelNetwork, LvlAdmin)
 admin.site.register(Rank)
 admin.site.register(Rewards)

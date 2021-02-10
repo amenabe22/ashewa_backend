@@ -134,3 +134,14 @@ class Affilate(models.Model):
 
     def __str__(self):
         return str(self.user.username)
+
+    def save_mplan_data(self, all_direct, total_earned, total_downline, mplan):
+        # aff = Affilate.objects.get(user=self.user)
+        print(AffilatePlans.objects.get(affilate=self))
+        # sponsors_aff_plan = AffilatePlans.objects.get(
+        #     affilate=self, core_plan=mplan, plan_type='core')
+        # sponsors_aff_plan.total_direct_referrals = all_direct
+        # sponsors_aff_plan.total_earned = total_earned
+        # sponsors_aff_plan.total_downline = total_downline
+        # sponsors_aff_plan.save()
+        # print(mplan,"PLEASEEEE LORD")

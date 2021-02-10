@@ -3,7 +3,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .core_manager import UniLevelMarketingNetworkManager
 from accounts.models import Affilate, CustomUser, CoreLevelPlans
-from .models import UnilevelNetwork, AffilatePlans, CoreMlmOrders, CoreTestMpttNode, Ewallet
+from .models import UnilevelNetwork, AffilatePlans, CoreMlmOrders, CoreTestMpttNode, Ewallet, Marketingwallet
 
 
 @receiver(post_save, sender=CoreMlmOrders)
@@ -15,6 +15,7 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
             sponsor = CoreTestMpttNode.objects.get(user=instance.sponsor)
             allAncestors = sponsor.get_ancestors(
                 include_self=True, ascending=True).order_by('level')
+
             print("#"*20)
             print(sponsor.get_descendants(), "YEAA")
             money = instance.product
@@ -25,20 +26,34 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
             print("$"*20)
             allLvl = []
             print(allAncestors)
-            [allLvl.append({'lvl': x.level, 'usr':str(x.user.user_id)}) for x in allAncestors]
+            [allLvl.append({'lvl': x.level, 'usr': str(x.user.user_id)})
+             for x in allAncestors]
             # print(allLvl,"LLLL")
             # print(allLvl[::-1],"PLEASE")
             # [allLvl.append({'lvl': x.level, 'usr': x.user.user_id})
             #  for x in allAncestors]
+            # reverse the list to reverse the levels
             allLvl = allLvl[::-1]
-            print(allLvl,"EEE")
-            for usrs,x  in zip(allAncestors, allLvl):
-                print(x,"UAA")
+            print(allLvl, "EEE")
+            allDescendants = sponsor.get_descendants()
+            allDirect = []
+            allDown = []
+            [allDirect.append(x) for x in allDescendants if (x.level == 1)]
+            [allDown.append(x) for x in allDescendants if (x.level > 1)]
+            # [AffilatePlans.objects.get(
+            #     affilate=Affilate.objects.get(user=usrs.user), core_plan=money, plan_type='core') for usrs in allAncestors]
+            # except Exception as e:
+            #     print(e)
+            for usrs, x in zip(allAncestors, allLvl):
+                # print(x, "UAA")
                 # po = filter(lambda y: y['usr'] == usrs.user.user_id, allLvl)
                 # print(list(po), "YEA")
                 # print('level{}_percentage'.format(
                 #     usrs.level+1), "===", usrs.user)
                 aff = Affilate.objects.get(user=usrs.user)
+                mWallet = Marketingwallet.objects.get(
+                    user=usrs.user
+                )
                 affWallet = Ewallet.objects.get(
                     user=usrs.user
                 )
@@ -48,12 +63,40 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                                                                         usrs.user, usrs.level+1))
                 affWallet.amount += money.joining_fee * fare
                 affWallet.save()
+                mWallet.amount += money.joining_fee * fare
+                mWallet.save()
                 print(aff, "FARE = {}".format(fare),
                       "AMT {}".format(money.joining_fee))
+                aff.save_mplan_data(len(allDirect), mWallet.amount, len(allDown), money)
+
             instance.paid_already = True
             instance.save()
+            #     usrs.level+1), "===", usrs.user)
+            # for usrs in allAncestors:
+
             print("#"*20)
-            pass
+
+
+# @receiver(post_save, sender=Marketingwallet)
+# def mwallet_handler(sender, instance, **kwargs):
+#     aff = Affilate.objects.get(user=instance.user)
+#     sponsors_aff_plan = AffilatePlans.objects.get(
+#         affilate=aff, core_plan=money, plan_type='core')
+#     sponsors_aff_plan.total_direct_referrals = len(allDirect)
+#     sponsors_aff_plan.total_earned = mWallet.amount
+#     sponsors_aff_plan.total_downline = len(allDown)
+#     sponsors_aff_plan.save()
+#     pass
+
+# do it on the wallet trigger
+#     aff = Affilate.objects.get(user=usrs.user)
+#     sponsors_aff_plan = AffilatePlans.objects.get(
+#         affilate=aff, core_plan=money, plan_type='core')
+#     # sponsors_aff_plan.total_direct_referrals = len(allDirect)
+#     # sponsors_aff_plan.total_earned = mWallet.amount
+#     # sponsors_aff_plan.total_downline = len(allDown)
+#     # sponsors_aff_plan.save()
+
 # Core MLM orders
 
 

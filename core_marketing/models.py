@@ -80,6 +80,15 @@ class Ewallet(models.Model):
     def __str__(self):
         return "{} **{} ETB**".format(self.user.username, self.amount)
 
+class Marketingwallet(models.Model):
+    wallet_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    amount = models.BigIntegerField(default=0)
+
+    def __str__(self):
+        return "{} **{} ETB**".format(self.user.username, self.amount)
+
 
 class CoreBrand(models.Model):
     brand_id = models.UUIDField(

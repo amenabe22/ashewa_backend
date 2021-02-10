@@ -139,6 +139,34 @@ GRAPHQL_JWT = {
     'JWT_EXPIRATION_DELTA': timedelta(minutes=600000),
     'JWT_REFRESH_EXPIRATION_DELTA': timedelta(days=700000),
 }
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
 MATERIAL_ADMIN_SITE = {
     'HEADER':  _('Ashewa Adminstration'),  # Admin site header
     'TITLE':  _('Ashewa Adminstration'),  # Admin site title
@@ -195,4 +223,3 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 #STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-

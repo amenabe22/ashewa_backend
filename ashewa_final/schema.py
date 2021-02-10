@@ -16,7 +16,7 @@ from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(LandingCarousel,
                                   Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
-from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode
+from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode, Marketingwallet
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
                           OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery
@@ -105,16 +105,26 @@ class Query(graphene.ObjectType):
     # please delete me
     get_core_docs = graphene.List(CoreDocsType)
     test_me = graphene.String()
-    get_genv2 = graphene.JSONString()
+    get_genv2 = graphene.JSONString(plan=graphene.String())
 
     @permissions_checker([IsAuthenticated])
-    def resolve_get_genv2(self, info):
-        userMptt = CoreTestMpttNode.objects.get(marketing_plan=CoreLevelPlans(core_id="eb1b5ee2-f45b-4723-b595-4ef12176671f"),
-                                                user=CustomUser.objects.get(username=info.context.user)).level
+    def resolve_get_genv2(self, info, plan):
+        core_plan = CoreLevelPlans(core_id=plan)
+        userMptt = CoreTestMpttNode.objects.get(marketing_plan=core_plan,
+                                                user=CustomUser.objects.get(username=info.context.user))
+        allAncestors = userMptt.get_ancestors()
+        allDownline = userMptt.get_descendants()
+        allDown = []
+        allDirect = []
         print("DEBUG")
-        print(userMptt)
-        print("DEBUG")
-        return "{'asdf':12}"
+        mWallet = Marketingwallet.objects.get(user=info.context.user).amount
+        [allDown.append(x) for x in allDownline if (x.level > 1)]
+        [allDirect.append(x) for x in allDownline if (x.level == 1)]
+        finData = {'total_earned': mWallet, 'total_downlines': len(
+            allDown), 'total_direct': len(allDirect)}
+        # print("ALL DLINE {}".format(len(allDown)))
+        # print("DEBUG")
+        return finData
 
     def resolve_test_me(self, info):
         # first = CoreTestMpttNode.objects._mptt_filter(
