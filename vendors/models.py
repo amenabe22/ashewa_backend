@@ -4,9 +4,11 @@ from accounts.models import CustomUser
 from django.db import models
 # Create your models here.
 
+
 class VenodrGallery(models.Model):
     image = models.ImageField(upload_to='venodr/gallery')
     img_desc = models.TextField(null=True, blank=True)
+
 
 class Vendor(models.Model):
     vendor_id = models.UUIDField(
@@ -16,7 +18,7 @@ class Vendor(models.Model):
     store_desc = models.TextField(blank=True, null=True)
     store_cover = models.ImageField(
         upload_to='store/image', null=True, blank=True)
-    store_gallery=models.ManyToManyField(VenodrGallery, blank=True)
+    store_gallery = models.ManyToManyField(VenodrGallery, blank=True)
     created_timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -65,13 +67,17 @@ class Order(models.Model):
     ]
     core_order_id = models.UUIDField(
         default=uuid4, editable=False, primary_key=True)
+    billing_info = models.ForeignKey(
+        to='core_marketing.BillingInfo', on_delete=models.CASCADE, null=True)
     order_id = models.UUIDField(default=uuid4, editable=False)
     ordered_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     product = models.ForeignKey(
         to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
-    timestamp = models.DateTimeField(auto_now_add=True, editable=True, null=True)
-    order_status = models.CharField(max_length=10, choices=order_stats, default='pen')
+    timestamp = models.DateTimeField(
+        auto_now_add=True, editable=True, null=True)
+    order_status = models.CharField(
+        max_length=10, choices=order_stats, default='pen')
 
     def __str__(self):
         return str(self.core_order_id)

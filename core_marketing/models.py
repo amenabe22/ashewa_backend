@@ -6,6 +6,71 @@ from accounts.models import CustomUser, Admin, Affilate, CoreLevelPlans
 from mptt.models import MPTTModel, TreeForeignKey
 
 
+class BillingInfo(models.Model):
+    binfo_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+
+    full_name = models.CharField(max_length=250)
+    address = models.TextField(null=True)
+    phone = models.CharField(null=True, max_length=300)
+
+    def __str__(self):
+        return str(self.binfo_id)
+
+# NEW
+
+
+class CoreMlmOrders(models.Model):
+    order_stats = [
+        ('pen', 'Pending Order'),
+        ('cmp', 'Completed Order'),
+        ('can', 'Cancelled Order')
+    ]
+    core_order_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    billing_info = models.ForeignKey(
+        BillingInfo, on_delete=models.CASCADE, null=True)
+    ordered_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        CoreLevelPlans, on_delete=models.CASCADE,  null=True)
+    sponsor = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name='sponsorZ')
+    timestamp = models.DateTimeField(
+        auto_now_add=True, editable=True, null=True)
+    order_status = models.CharField(
+        max_length=10, choices=order_stats, default='pen')
+    paid_already = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.core_order_id)
+# NEW
+
+
+class CoreVendorMlmOrders(models.Model):
+    order_stats = [
+        ('pen', 'Pending Order'),
+        ('cmp', 'Completed Order'),
+        ('can', 'Cancelled Order')
+    ]
+    core_order_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    billing_info = models.ForeignKey(
+        BillingInfo, on_delete=models.CASCADE, null=True)
+    order_id = models.UUIDField(default=uuid4, editable=False)
+    ordered_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
+    timestamp = models.DateTimeField(
+        auto_now_add=True, editable=True, null=True)
+    order_status = models.CharField(
+        max_length=10, choices=order_stats, default='pen')
+    paid_already = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.core_order_id)
+
+
 class Ewallet(models.Model):
     wallet_id = models.UUIDField(
         default=uuid4, editable=False, primary_key=True)
@@ -284,9 +349,31 @@ class UserMessages(models.Model):
     def __str__(self):
         return self.email
 
+
 class CoreDocs(models.Model):
     name = models.CharField(max_length=300)
     doc = models.FileField(upload_to='core/docs')
 
     def __str__(self):
         return self.name
+
+
+# Core test mptt
+class CoreTestMpttNode(MPTTModel):
+    # parent = models.ForeignKey("self", on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
+    parent = TreeForeignKey('self', on_delete=models.CASCADE,
+                            null=True, blank=True, related_name='children')
+    marketing_plan = models.ForeignKey(
+        CoreLevelPlans, on_delete=models.CASCADE, null=True)
+
+    class MPTTMeta:
+        order_insertion_by = ['user']
+
+    def __str__(self):
+        return "{} called {} ===>[[{}]]<===".format(self.parent, self.user, self.marketing_plan.plan_name)
+
+    def initiate_nodes_logic(self):
+        print("CUR PARENT => {}".format(self.parent.user))
+        print("CUR USR => {}".format(self.user))
+        print("I will pay every one what they deserve")

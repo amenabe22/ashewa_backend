@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import(CoreLevelPlans, CoreBrand, Ewallet, UnilevelNetwork, UserMessages,
-                    Rewards, PayoutReport, DepositReport, AffilatePlans, TestNetwork, CoreDocs)
+                    Rewards, PayoutReport, DepositReport, AffilatePlans, TestNetwork, CoreDocs,
+                    CoreTestMpttNode, CoreMlmOrders, CoreVendorMlmOrders, BillingInfo)
 from accounts.models import Rank
 
 
@@ -13,8 +14,14 @@ class LayerAdmin(admin.ModelAdmin):
                     'user', 'parent', 'layer_id',)
 
 
+class CoreTestMpttNodeAdmin(admin.ModelAdmin):
+    list_display = ('level', 'parent',)
+
+
 class UserMessagesAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'email', 'message',)
+
+
     # list_editable = ('affilate',)
 admin.site.register(CoreLevelPlans)
 admin.site.register(CoreBrand)
@@ -28,3 +35,7 @@ admin.site.register(AffilatePlans)
 admin.site.register(TestNetwork,  LayerAdmin)
 admin.site.register(UserMessages, UserMessagesAdmin)
 admin.site.register(CoreDocs)
+admin.site.register(CoreTestMpttNode, CoreTestMpttNodeAdmin)
+admin.site.register(CoreVendorMlmOrders)
+admin.site.register(CoreMlmOrders)
+admin.site.register(BillingInfo)

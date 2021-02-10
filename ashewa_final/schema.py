@@ -16,7 +16,7 @@ from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(LandingCarousel,
                                   Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
-from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork, UserMessages, CoreDocs
+from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
                           OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery
@@ -25,7 +25,7 @@ from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTy
 from core_ecommerce.product_mutations import(
     NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer, CreateTestLayer
+from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder
 from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
 from django.forms.models import model_to_dict
@@ -104,6 +104,35 @@ class Query(graphene.ObjectType):
     ), page=graphene.Int(), page_size=graphene.Int(), ranged=graphene.Boolean(), minP=graphene.Int(), maxP=graphene.Int())
     # please delete me
     get_core_docs = graphene.List(CoreDocsType)
+    test_me = graphene.String()
+    get_genv2 = graphene.JSONString()
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_get_genv2(self, info):
+        userMptt = CoreTestMpttNode.objects.get(marketing_plan=CoreLevelPlans(core_id="eb1b5ee2-f45b-4723-b595-4ef12176671f"),
+                                                user=CustomUser.objects.get(username=info.context.user)).level
+        print("DEBUG")
+        print(userMptt)
+        print("DEBUG")
+        return "{'asdf':12}"
+
+    def resolve_test_me(self, info):
+        # first = CoreTestMpttNode.objects._mptt_filter(
+        #     user=info.context.user)
+        # get ancestors of this specific user
+        # print(first.get_ancestors(include_self=True))
+        # usrs = []
+        # for x in first.get_descendants(): usrs.append(x.user)
+        # print(usrs)
+        # rln = CoreTestMpttNode.objects._mptt_filter(level__lte=1)
+        # [print(x.user, x.level) for x in rln]
+        print(CoreTestMpttNode.objects.get(marketing_plan=CoreLevelPlans(core_id="eb1b5ee2-f45b-4723-b595-4ef12176671f"),
+                                           user=CustomUser.objects.get(username=info.context.user)).level)
+        # [print(x.level) for x in CoreTestMpttNode.objects.all()]
+        # level__lte
+        # print(first.get_ancestors(include_self=True))
+        # print(CoreTestMpttNode.objects.tree_model())
+        return "Hey there"
 
     def resolve_get_core_docs(self, info):
         return CoreDocs.objects.all()
@@ -459,6 +488,10 @@ class Mutations(graphene.ObjectType):
     user_message = CreateUserMessage.Field(
         description="User Message about coming soon page ..."
     )
+    # create genv2
+    create_genv2 = CreateGenv2.Field(description="create generation for the ")
+    create_cmlm_order = CreateCoreMlmOrder.Field(
+        description="create core mlm initial order")
 
 
 schema = graphene.Schema(query=Query, mutation=Mutations)
