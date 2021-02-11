@@ -6,7 +6,7 @@ from .admin_mutations import CreateMarketingPlans
 from core_ecommerce.types import (LandingCarsType, LandingCatBlockType,
                                   ProductImageType, ProductsType, ParentCategoryType,
                                   CategoryType, SubCatsType, ProductsPaginatedType)
-from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart
+from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart, PopCart
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
@@ -109,7 +109,11 @@ class Query(graphene.ObjectType):
 
     @permissions_checker([IsAuthenticated])
     def resolve_get_genv2(self, info, plan):
-        core_plan = CoreLevelPlans(core_id=plan)
+        aff = AffilatePlans.objects.get(plan_id=plan)
+        # core_plan = CoreLevelPlans(core_id=plan)
+        core_plan = aff.core_plan
+        print("DEBUG")
+        print(aff.core_plan.plan_name)
         userMptt = CoreTestMpttNode.objects.get(marketing_plan=core_plan,
                                                 user=CustomUser.objects.get(username=info.context.user))
         allAncestors = userMptt.get_ancestors()
@@ -121,7 +125,7 @@ class Query(graphene.ObjectType):
         [allDown.append(x) for x in allDownline if (x.level > 1)]
         [allDirect.append(x) for x in allDownline if (x.level == 1)]
         finData = {'total_earned': mWallet, 'total_downlines': len(
-            allDown), 'total_direct': len(allDirect)}
+            allDown), 'total_direct': len(allDirect), 'plan_name': core_plan.plan_name}
         # print("ALL DLINE {}".format(len(allDown)))
         # print("DEBUG")
         return finData
@@ -492,6 +496,9 @@ class Mutations(graphene.ObjectType):
     )
     load_cart = LoadCart.Field(
         description="Load products to cart"
+    )
+    pop_cart = PopCart.Field(
+        description="Delete cart"
     )
     # Create test layer
     create_tlayer = CreateTestLayer.Field()

@@ -59,6 +59,22 @@ class VendorLevelPlans(models.Model):
         return str(self.plan_name)
 
 
+class Cart(models.Model):
+    cart_core_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    cart_id = models.UUIDField(
+        default=uuid4, editable=False)
+    user = models.ForeignKey(to='accounts.CustomUser',
+                             on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey(
+        to='core_ecommerce.Products', on_delete=models.CASCADE)
+    quantity = models.BigIntegerField(null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.cart_core_id)
+
+
 class Order(models.Model):
     order_stats = [
         ('pen', 'Pending Order'),
@@ -74,6 +90,7 @@ class Order(models.Model):
     ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     product = models.ForeignKey(
         to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
+
     timestamp = models.DateTimeField(
         auto_now_add=True, editable=True, null=True)
     order_status = models.CharField(
@@ -81,18 +98,3 @@ class Order(models.Model):
 
     def __str__(self):
         return str(self.core_order_id)
-
-
-class Cart(models.Model):
-    cart_core_id = models.UUIDField(
-        default=uuid4, editable=False, primary_key=True)
-    cart_id = models.UUIDField(
-        default=uuid4, editable=False)
-    user = models.ForeignKey(to='accounts.CustomUser',
-                             on_delete=models.CASCADE, null=True)
-    product = models.ForeignKey(
-        to='core_ecommerce.Products', on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return str(self.cart_core_id)

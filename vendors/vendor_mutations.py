@@ -8,6 +8,24 @@ from django_graphene_permissions.permissions import IsAuthenticated
 from core_ecommerce.models import Products
 
 
+class PopCart(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        cart = graphene.String()
+
+    @permissions_checker([IsAuthenticated])
+    def mutate(self, info, cart):
+        usrCart = Cart.objects.filter(
+            cart_core_id=cart, user=info.context.user)
+        if usrCart.exists():
+            usrCart.delete()
+        else:
+            raise Exception("invalid cart")
+
+        return PopCart(payload=True)
+
+
 class LoadCart(graphene.Mutation):
     payload = graphene.Boolean()
 
@@ -104,7 +122,7 @@ class CreateVendorPlans(graphene.Mutation):
 #     class Arguments:
 #         image = Upload()
 #         img_desc = graphene.String()
-        
+
 #         @permissions_checker([VendorsPermission])
 #         def mutate(self, info, image, img_desc):
 #             vendG = VenodrGallery.objects.all()
