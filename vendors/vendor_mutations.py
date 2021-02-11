@@ -31,12 +31,12 @@ class LoadCart(graphene.Mutation):
 
     class Arguments:
         product = graphene.String()
-
+        quan = graphene.Int()
     @permissions_checker([IsAuthenticated])
-    def mutate(self, info, product):
+    def mutate(self, info, product, quan):
         try:
             prd = Products.objects.get(product_id=product)
-            Cart.objects.create(user=info.context.user, product=prd)
+            Cart.objects.create(user=info.context.user, product=prd, quantity=quan)
         except Exception as e:
             raise Exception(e)
 
