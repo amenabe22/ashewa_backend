@@ -18,7 +18,7 @@ class PopCart(graphene.Mutation):
     def mutate(self, info, cart):
         usrCart = Cart.objects.filter(
             cart_core_id=cart, user=info.context.user)
-        if usrCart.exists():
+        if not usrCart.exists():
             usrCart.delete()
         else:
             raise Exception("invalid cart")
@@ -32,11 +32,13 @@ class LoadCart(graphene.Mutation):
     class Arguments:
         product = graphene.String()
         quan = graphene.Int()
+
     @permissions_checker([IsAuthenticated])
     def mutate(self, info, product, quan):
         try:
             prd = Products.objects.get(product_id=product)
-            Cart.objects.create(user=info.context.user, product=prd, quantity=quan)
+            Cart.objects.create(user=info.context.user,
+                                product=prd, quantity=quan)
         except Exception as e:
             raise Exception(e)
 
