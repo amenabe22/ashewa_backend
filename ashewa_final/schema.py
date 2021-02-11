@@ -260,7 +260,7 @@ class Query(graphene.ObjectType):
 
     @ permissions_checker([IsAuthenticated])
     def resolve_get_carts(self, info, page, page_size):
-        qs = Cart.objects.filter(user=info.context.user).order_by('timestamp')
+        qs = Cart.objects.filter(user=info.context.user).order_by('-timestamp')
         return get_orders_paginator(qs, page_size, page, None, CartPaginatedType)
 
     @ permissions_checker([VendorsPermission, IsAuthenticated])
