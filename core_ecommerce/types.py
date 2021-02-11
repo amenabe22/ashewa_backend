@@ -3,6 +3,9 @@ from graphene_django import DjangoObjectType
 from .models import(ProductImage, Products, ParentCategory,
                     Category, SubCategory, LandingCarousel, ParentCategory)
 
+from vendors.types import OrdersType
+from core_marketing.types import CoreMlmOrderType
+
 
 class LandingCarsType(DjangoObjectType):
     class Meta:
@@ -52,3 +55,8 @@ class ProductsPaginatedType(graphene.ObjectType):
 class LandingCatBlockType(graphene.ObjectType):
     pcat = graphene.Field(ParentCategoryType)
     catProds = graphene.List(ProductsType)
+
+
+class UsrOrderType(graphene.ObjectType):
+    core_ord = graphene.List(CoreMlmOrderType)
+    ords = graphene.List(OrdersType)

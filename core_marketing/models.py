@@ -34,7 +34,7 @@ class CoreMlmOrders(models.Model):
     product = models.ForeignKey(
         CoreLevelPlans, on_delete=models.CASCADE,  null=True)
     sponsor = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, null=True, related_name='sponsorZ')
+        CustomUser, on_delete=models.CASCADE, null=True, related_name='sponsor', blank=True)
     timestamp = models.DateTimeField(
         auto_now_add=True, editable=True, null=True)
     order_status = models.CharField(

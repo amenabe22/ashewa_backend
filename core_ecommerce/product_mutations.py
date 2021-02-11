@@ -2,11 +2,54 @@ import graphene
 from vendors.models import Vendor
 from core_ecommerce.models import CoreBrand
 from graphene_file_upload.scalars import Upload
-from django_graphene_permissions import  permissions_checker
+from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
 from ashewa_final.core_perimssions import AdminPermission, VendorsPermission
 from .models import Products, ProductImage, ParentCategory, SubCategory, Category
 from .types import ProductImageType, ProductsType, ParentCategoryType, CategoryType, SubCatsType
+
+
+class EditProduct(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        prod = graphene.String()
+        product_name = graphene.String()
+        product_desc = graphene.String()
+        product_parent_category = graphene.String()
+        product_category = graphene.String()
+        product_sub_category = graphene.String()
+        # product_brand = graphene.String()
+        selling_price = graphene.Int()
+        dealer_price = graphene.Int()
+        business_value = graphene.Int()
+        # discount = graphene.Int()
+        stock_amount = graphene.Int()
+        # tax = graphene.Int()
+        images = Upload()
+
+    @permissions_checker([VendorsPermission])
+    def mutate(self, info, product_name, product_desc, product_parent_category, product_category,
+               product_sub_category, selling_price, dealer_price, business_value, stock_amount, 
+               images, product):
+        vendor = Vendor.objects.get(user=info.context.user)
+        prod = Products.objects.filter(product_id=product, vendor=vendor)
+        if not prod.exists():
+            raise Exception("product error")
+        try:
+            sc = SubCategory.objects.get(sub_cat_id=product_sub_category)
+            cat = Category.objects.get(cat_id=product_category)
+            parent = ParentCategory.objects.get(
+                pcat_id=product_parent_category)
+        except Exception as e:
+            raise Exception(str(e))
+        prod.update(vendor=vendor, product_name=product_name, product_desc=product_desc,
+                    selling_price=selling_price, dealer_price=dealer_price,
+                    business_value=business_value, discount=None,  # discount not set
+                    stock_amount=stock_amount, product_parent_category=parent,
+                    product_subcategory=sc, product_category=cat, tax=None,  # tax amount not set
+                    )
+        return EditProduct(payload=True)
 
 
 class NewProductMutation(graphene.Mutation):

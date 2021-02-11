@@ -3,7 +3,7 @@ import graphene
 import graphql_jwt
 from pprint import pprint
 from .admin_mutations import CreateMarketingPlans
-from core_ecommerce.types import (LandingCarsType, LandingCatBlockType,
+from core_ecommerce.types import (LandingCarsType, LandingCatBlockType, UsrOrderType,
                                   ProductImageType, ProductsType, ParentCategoryType,
                                   CategoryType, SubCatsType, ProductsPaginatedType)
 from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart, PopCart
@@ -16,13 +16,14 @@ from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(LandingCarousel,
                                   Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
-from core_marketing.models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode, Marketingwallet
+from core_marketing.models import (CoreLevelPlans, UnilevelNetwork, AffilatePlans,
+                                   TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode, Marketingwallet, CoreMlmOrders)
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
                           OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery
 from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTyoe, CoreDocsType,
                                  CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
-from core_ecommerce.product_mutations import(
+from core_ecommerce.product_mutations import(EditProduct,
     NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
 from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder
@@ -106,6 +107,14 @@ class Query(graphene.ObjectType):
     get_core_docs = graphene.List(CoreDocsType)
     test_me = graphene.String()
     get_genv2 = graphene.JSONString(plan=graphene.String())
+    user_orders = graphene.List(UsrOrderType)
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_user_orders(self, info):
+        usr = info.context.user
+        _vend_ords = Order.objects.filter(ordered_by=usr)
+        _mlm_ords = CoreMlmOrders.objects.filter(ordered_by=usr)
+        return [{'ords': _vend_ords, 'core_ord': _mlm_ords}]
 
     @permissions_checker([IsAuthenticated])
     def resolve_get_genv2(self, info, plan):
@@ -510,5 +519,8 @@ class Mutations(graphene.ObjectType):
     create_cmlm_order = CreateCoreMlmOrder.Field(
         description="create core mlm initial order")
 
-
+    edit_product = EditProduct.Field(
+        description="Edit Products"
+    )
+    
 schema = graphene.Schema(query=Query, mutation=Mutations)
