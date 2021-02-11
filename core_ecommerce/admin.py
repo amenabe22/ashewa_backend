@@ -3,7 +3,7 @@ from .models import (ParentCategory, Category, SubCategory,
                      Products, ProductImage, LandingCarousel)
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('product_name', 'selling_price','vendor', 'product_parent_category','product_brand','stock_amount',)
+    list_display = ('product_name', 'selling_price','vendor', 'product_parent_category','stock_amount',)
 
 admin.site.register(ParentCategory)
 admin.site.register(Category)

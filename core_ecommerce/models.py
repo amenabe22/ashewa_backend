@@ -58,7 +58,7 @@ class Products(models.Model):
         Category, on_delete=models.CASCADE, null=True)
     product_subcategory = models.ForeignKey(
         SubCategory, on_delete=models.CASCADE, null=True)
-    product_brand = models.ForeignKey(CoreBrand, on_delete=models.CASCADE)
+    # product_brand = models.ForeignKey(CoreBrand, on_delete=models.CASCADE)
     created_timestamp = models.DateTimeField(auto_now_add=True, null=True)
     selling_price = models.BigIntegerField(null=True)
     dealer_price = models.BigIntegerField(null=True)

@@ -18,7 +18,7 @@ class NewProductMutation(graphene.Mutation):
         product_parent_category = graphene.String()
         product_category = graphene.String()
         product_sub_category = graphene.String()
-        product_brand = graphene.String()
+        # product_brand = graphene.String()
         selling_price = graphene.Int()
         dealer_price = graphene.Int()
         business_value = graphene.Int()
@@ -29,13 +29,12 @@ class NewProductMutation(graphene.Mutation):
 
     @permissions_checker([VendorsPermission])
     def mutate(self, info, product_name, product_desc, product_parent_category, product_category,
-               product_sub_category, product_brand, selling_price, dealer_price, business_value, stock_amount, images):
+               product_sub_category, selling_price, dealer_price, business_value, stock_amount, images):
         try:
             sc = SubCategory.objects.get(sub_cat_id=product_sub_category)
             cat = Category.objects.get(cat_id=product_category)
             parent = ParentCategory.objects.get(
                 pcat_id=product_parent_category)
-            brand = CoreBrand.objects.get(brand_id=product_brand)
         except Exception as e:
             raise Exception(str(e))
         # create product here
@@ -46,7 +45,6 @@ class NewProductMutation(graphene.Mutation):
             business_value=business_value, discount=None,  # discount not set
             stock_amount=stock_amount, product_parent_category=parent,
             product_subcategory=sc, product_category=cat, tax=None,  # tax amount not set
-            product_brand=brand  # set a hard coded brand here
         )
         [prod.product_images.create(image=(x)) for x in images]
         return NewProductMutation(payload=Products.objects.filter(
