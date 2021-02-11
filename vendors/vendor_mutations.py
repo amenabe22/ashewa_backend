@@ -19,8 +19,7 @@ class PopCart(graphene.Mutation):
         usrCart = Cart.objects.filter(
             cart_core_id=cart, user=info.context.user)
         if usrCart.exists():
-            usrCart[0].delete()
-            usrCart[0].save()
+            usrCart.delete()
         else:
             raise Exception("invalid cart")
 
