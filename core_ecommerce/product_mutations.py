@@ -13,7 +13,7 @@ class EditProduct(graphene.Mutation):
     payload = graphene.Boolean()
 
     class Arguments:
-        prod = graphene.String()
+        product = graphene.String()
         product_name = graphene.String()
         product_desc = graphene.String()
         product_parent_category = graphene.String()
