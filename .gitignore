@@ -10,7 +10,6 @@ __pycache__/
 .Python
 media/
 static/
-/static
 /media
 build/
 develop-eggs/
