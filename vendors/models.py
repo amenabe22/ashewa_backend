@@ -88,9 +88,10 @@ class Order(models.Model):
     order_id = models.UUIDField(default=uuid4, editable=False)
     ordered_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
-    product = models.ForeignKey(
-        to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
-
+    product = models.ManyToManyField(
+        to='core_ecommerce.Products', blank=True)
+    # product = models.ForeignKey(
+    #     to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
     timestamp = models.DateTimeField(
         auto_now_add=True, editable=True, null=True)
     order_status = models.CharField(
