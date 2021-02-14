@@ -24,9 +24,9 @@ from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery
 from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTyoe, CoreDocsType,
                                  CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType)
 from core_ecommerce.product_mutations import(EditProduct,
-    NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
+                                             NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder
+from core_marketing.marketing_mutations import (AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage,EditVendorLevelPackage)
 from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
 from django.forms.models import model_to_dict
@@ -108,6 +108,12 @@ class Query(graphene.ObjectType):
     test_me = graphene.String()
     get_genv2 = graphene.JSONString(plan=graphene.String())
     user_orders = graphene.List(UsrOrderType)
+    vendor_package_detail = graphene.Field(
+        VendorPlanType, plan=graphene.String())
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_vendor_package_detail(self, info, plan):
+        return VendorLevelPlans.objects.get(core_id=plan)
 
     @permissions_checker([IsAuthenticated])
     def resolve_user_orders(self, info):
@@ -522,5 +528,12 @@ class Mutations(graphene.ObjectType):
     edit_product = EditProduct.Field(
         description="Edit Products"
     )
-    
+    # vendor package CRUDS
+    create_vendor_package = CreateVendorPackage.Field(
+        description="Create package for vendors"
+    )
+    edit_vpack = EditVendorLevelPackage.Field(
+        description="Edit Vendor Level Package"
+    )
+
 schema = graphene.Schema(query=Query, mutation=Mutations)

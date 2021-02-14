@@ -9,11 +9,71 @@ from .models import AffilatePlans, UnilevelNetwork
 from ashewa_final.core_perimssions import AffilatePermission
 from django_graphene_permissions.permissions import IsAuthenticated
 from accounts.models import CustomUser
-
+from ashewa_final.core_perimssions import VendorsPermission
+# from core_perimssions import VendorsPermission, AffilatePermission
 from core_marketing.models import TestNetwork, CoreTestMpttNode, CoreLevelPlans, CoreMlmOrders, CoreVendorMlmOrders, BillingInfo
 from core_marketing.types import CoreTestMpttType, CoreMlmOrderType, CoreVendorMlmOrderType
 UUID_PATTERN = re.compile(
     r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
+
+
+class EditVendorLevelPackage(graphene.Mutation):
+    payload = graphene.Field(VendorPlanType)
+
+    class Arguments:
+        plan_name = graphene.String()
+        plan_desc = graphene.String()
+        purchase_bonus = graphene.Float()
+        level_1 = graphene.Float()
+        level_2 = graphene.Float()
+        level_3 = graphene.Float()
+        level_4 = graphene.Float()
+        plan = graphene.String()
+
+    @permissions_checker([VendorsPermission, IsAuthenticated])
+    def mutate(self, info, plan_name, plan_desc, level_1, level_2, level_3, level_4, purchase_bonus, plan):
+        vendor = Vendor.objects.get(user=info.context.user)
+        try:
+            plan = VendorLevelPlans.objects.filter(
+                core_id=plan, creator=vendor)
+            plan.update(plan_name=plan_name, plan_description=plan_desc,
+                level1_percentage=level_1, level2_percentage=level_2, level3_percentage=level_3,
+                level4_percentage=level_4, purchase_bonus=purchase_bonus
+            )
+            # plan = VendorLevelPlans.objects.create(
+            #     creator=vendor, plan_name=plan_name, plan_description=plan_desc,
+            #     level1_percentage=level_1, level2_percentage=level_2, level3_percentage=level_3,
+            #     level4_percentage=level_4, purchase_bonus=purchase_bonus
+            # )
+        except Exception as e:
+            raise Exception(str(e))
+        return EditVendorLevelPackage(payload=plan[0])
+
+
+class CreateVendorPackage(graphene.Mutation):
+    payload = graphene.Field(VendorPlanType)
+
+    class Arguments:
+        plan_name = graphene.String()
+        plan_desc = graphene.String()
+        purchase_bonus = graphene.Float()
+        level_1 = graphene.Float()
+        level_2 = graphene.Float()
+        level_3 = graphene.Float()
+        level_4 = graphene.Float()
+
+    @permissions_checker([VendorsPermission, IsAuthenticated])
+    def mutate(self, info, plan_name, plan_desc, level_1, level_2, level_3, level_4, purchase_bonus):
+        vendor = Vendor.objects.get(user=info.context.user)
+        try:
+            plan = VendorLevelPlans.objects.create(
+                creator=vendor, plan_name=plan_name, plan_description=plan_desc,
+                level1_percentage=level_1, level2_percentage=level_2, level3_percentage=level_3,
+                level4_percentage=level_4, purchase_bonus=purchase_bonus
+            )
+        except Exception as e:
+            raise Exception(str(e))
+        return CreateVendorPackage(payload=plan)
 
 
 class CreateCoreMlmOrder(graphene.Mutation):
@@ -39,7 +99,7 @@ class CreateCoreMlmOrder(graphene.Mutation):
             # get sponsor and add to the layer
             _ord = CoreMlmOrders.objects.create(
                 billing_info=binfo, product=core_plan,
-                ordered_by=info.context.user,sponsor=CustomUser.objects.get(
+                ordered_by=info.context.user, sponsor=CustomUser.objects.get(
                     user_id=sponsor
                 ))
             sponsor_user = CustomUser.objects.get(user_id=sponsor)
@@ -150,6 +210,7 @@ class CreateMlmLayer(graphene.Mutation):
         return CreateMlmLayer(payload=True)
 
 
+# this is where the plan order is granted and orders approved
 class AddPlanMutation(graphene.Mutation):
     payload = graphene.Boolean()
 

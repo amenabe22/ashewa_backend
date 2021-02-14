@@ -54,6 +54,7 @@ class VendorLevelPlans(models.Model):
     level13_percentage = models.FloatField(default=0.0, null=True, blank=True)
     level14_percentage = models.FloatField(default=0.0, null=True, blank=True)
     level15_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return str(self.plan_name)
