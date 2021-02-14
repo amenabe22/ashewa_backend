@@ -9,6 +9,11 @@ from .models import Products, ProductImage, ParentCategory, SubCategory, Categor
 from .types import ProductImageType, ProductsType, ParentCategoryType, CategoryType, SubCatsType
 
 
+class PicsInputType(graphene.InputObjectType):
+    pic = Upload()
+    pid = graphene.Int()
+
+
 class EditProduct(graphene.Mutation):
     payload = graphene.Boolean()
 
@@ -26,12 +31,14 @@ class EditProduct(graphene.Mutation):
         # discount = graphene.Int()
         stock_amount = graphene.Int()
         # tax = graphene.Int()
-        images = Upload()
+        images = graphene.List(PicsInputType)
 
     @permissions_checker([VendorsPermission])
-    def mutate(self, info, product_name, product_desc, product_parent_category, product_category,
-               product_sub_category, selling_price, dealer_price, business_value, stock_amount, 
-               images, product):
+    def mutate(self, info, product, product_name, product_desc, product_parent_category, product_category, product_sub_category, selling_price, dealer_price, business_value, stock_amount, images):
+        print("#"*130)
+        print(images)
+        print("#"*130)
+        allPicIds = []
         vendor = Vendor.objects.get(user=info.context.user)
         prod = Products.objects.filter(product_id=product, vendor=vendor)
         if not prod.exists():
@@ -41,6 +48,7 @@ class EditProduct(graphene.Mutation):
             cat = Category.objects.get(cat_id=product_category)
             parent = ParentCategory.objects.get(
                 pcat_id=product_parent_category)
+
         except Exception as e:
             raise Exception(str(e))
         prod.update(vendor=vendor, product_name=product_name, product_desc=product_desc,
@@ -49,6 +57,26 @@ class EditProduct(graphene.Mutation):
                     stock_amount=stock_amount, product_parent_category=parent,
                     product_subcategory=sc, product_category=cat, tax=None,  # tax amount not set
                     )
+        [allPicIds.append(x.id) for x in prod[0].product_images.all()]
+
+        for pic in images:
+            if pic.pid is not None:
+                if not pic.pid in allPicIds:
+                    print(pic.pid)
+                    raise Exception("image assertion error")
+                allPicIds.remove(pic.pid)
+            else:
+                prod[0].product_images.create(image=pic.pic)
+                prod[0].save()
+                print("YAYAYY")
+
+        # check and add images to the product
+        # for pic in images:
+        #     if pic.pid is None:
+        for x in allPicIds:
+            prod[0].product_images.remove(ProductImage.objects.get(id=x))
+            prod[0].save()
+            print(x, "YEAAAAA")
         return EditProduct(payload=True)
 
 
