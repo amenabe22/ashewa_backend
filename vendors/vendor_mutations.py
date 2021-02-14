@@ -6,6 +6,11 @@ from django_graphene_permissions import permissions_checker
 from ashewa_final.core_perimssions import VendorsPermission, AdminPermission
 from django_graphene_permissions.permissions import IsAuthenticated
 from core_ecommerce.models import Products
+from core_marketing.models import BillingInfo
+
+
+class ProductsInput(graphene.InputObjectType):
+    prod = graphene.String()
 
 
 class PopCart(graphene.Mutation):
@@ -49,17 +54,35 @@ class CreateOrder(graphene.Mutation):
     payload = graphene.Boolean()
 
     class Arguments:
-        product = graphene.String()
+        products = graphene.List(ProductsInput)
+        name = graphene.String()
+        phone = graphene.String()
+        address = graphene.String()
 
-    @permissions_checker([VendorsPermission, IsAuthenticated])
-    def mutate(self, info, product):
+    @permissions_checker([IsAuthenticated])
+    def mutate(self, info, products, name, phone, address):
         # create the order here
         try:
-            prd = Products.objects.get(product_id=product)
-            Order.objects.create(
-                product=prd, ordered_by=info.context.user,
-                ordered_from=prd.vendor
-            )
+            hasErr = False
+            if Vendor.objects.filter(user=info.context.user).exists():
+                for prod in products:
+                    prd = Products.objects.get(product_id=prod.prod)
+                    if prd.vendor == Vendor.objects.get(user=info.context.user):
+                        hasErr = True
+
+            if hasErr:
+                raise Exception("can't order from self store")
+            for prod in products:
+                prd = Products.objects.get(product_id=prod.prod)
+                order = Order.objects.create(
+                    ordered_by=info.context.user,
+                    ordered_from=prd.vendor,
+                    product=prd
+                )
+                order.billing_info = BillingInfo.objects.create(
+                    full_name=name, phone=phone, address=address
+                )
+                order.save()
         except Exception as e:
             raise Exception(str(e))
 

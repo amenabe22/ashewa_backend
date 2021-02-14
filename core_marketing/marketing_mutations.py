@@ -1,11 +1,11 @@
 import re
 import graphene
 from .types import AffilatePlansType
-from vendors.models import VendorLevelPlans, Vendor
 from vendors.types import VendorPlanType, VendorType
 from accounts.models import Affilate, CoreLevelPlans
 from django_graphene_permissions import permissions_checker
 from .models import AffilatePlans, UnilevelNetwork
+from vendors.models import VendorLevelPlans, Vendor, Cart
 from ashewa_final.core_perimssions import AffilatePermission
 from django_graphene_permissions.permissions import IsAuthenticated
 from accounts.models import CustomUser
@@ -15,6 +15,16 @@ from core_marketing.models import TestNetwork, CoreTestMpttNode, CoreLevelPlans,
 from core_marketing.types import CoreTestMpttType, CoreMlmOrderType, CoreVendorMlmOrderType
 UUID_PATTERN = re.compile(
     r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
+
+
+class EmptyCart(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    @permissions_checker([IsAuthenticated])
+    def mutate(self, info):
+        usrCart = Cart.objects.filter(user=info.context.user)
+        usrCart.delete()
+        return EmptyCart(payload=True)
 
 
 class EditVendorLevelPackage(graphene.Mutation):
@@ -37,9 +47,9 @@ class EditVendorLevelPackage(graphene.Mutation):
             plan = VendorLevelPlans.objects.filter(
                 core_id=plan, creator=vendor)
             plan.update(plan_name=plan_name, plan_description=plan_desc,
-                level1_percentage=level_1, level2_percentage=level_2, level3_percentage=level_3,
-                level4_percentage=level_4, purchase_bonus=purchase_bonus
-            )
+                        level1_percentage=level_1, level2_percentage=level_2, level3_percentage=level_3,
+                        level4_percentage=level_4, purchase_bonus=purchase_bonus
+                        )
             # plan = VendorLevelPlans.objects.create(
             #     creator=vendor, plan_name=plan_name, plan_description=plan_desc,
             #     level1_percentage=level_1, level2_percentage=level_2, level3_percentage=level_3,

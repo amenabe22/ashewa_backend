@@ -26,7 +26,8 @@ from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTy
 from core_ecommerce.product_mutations import(EditProduct,
                                              NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import (AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage,EditVendorLevelPackage)
+from core_marketing.marketing_mutations import (EmptyCart,
+    AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage, EditVendorLevelPackage)
 from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
 from django.forms.models import model_to_dict
@@ -535,5 +536,9 @@ class Mutations(graphene.ObjectType):
     edit_vpack = EditVendorLevelPackage.Field(
         description="Edit Vendor Level Package"
     )
+    empty_cart = EmptyCart.Field(
+        description="Empty users's cart"
+    )
+
 
 schema = graphene.Schema(query=Query, mutation=Mutations)
