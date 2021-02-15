@@ -44,11 +44,13 @@ INSTALLED_APPS += [
     'corsheaders',
     'mptt',
     # 'channels',
-    'graphql_playground'
+    'graphql_playground',
+    'django_hosts',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'django_hosts.middleware.HostsRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,6 +61,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'ashewa_final.urls'
+
+ROOT_HOSTCONF = 'ashewa_final.hosts'
+
+DEFAULT_HOST = 'www'
 
 TEMPLATES = [
     {

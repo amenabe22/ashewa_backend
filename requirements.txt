@@ -22,3 +22,4 @@ django-graphql-jwt
 graphene-file-upload
 PyJWT==1.7.1
 django-graphql-playground
+django-hosts
