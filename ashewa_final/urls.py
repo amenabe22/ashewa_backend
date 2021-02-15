@@ -28,7 +28,7 @@ urlpatterns = [
     path('rel/<str:plan>/', getGen),
     path('playground/', GraphQLPlaygroundView.as_view(endpoint="/graphql/")),
     #path('', Home.as_view())
-    url(r'^(?!admin-core12|graphql|static|media|css|rel|playground).*$',
+    url(r'^(?!admin-core12|graphql|static|media|css|rel|playground|store-p).*$',
         Home.as_view()),
 ]
 

@@ -5,5 +5,5 @@ host_patterns = patterns(
     '',
     host(r'www', 'ashewa_final.urls', name='www'),
     host(r'admin', settings.ROOT_URLCONF, name='admin'),
-    # host(r'api', 'subdomains_tutorial.api_urls', name='api'),
+    host(r'store', 'vendors.urls', name='store'),
 )
