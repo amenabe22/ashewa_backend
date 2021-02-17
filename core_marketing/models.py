@@ -386,3 +386,23 @@ class CoreTestMpttNode(MPTTModel):
         print("CUR PARENT => {}".format(self.parent.user))
         print("CUR USR => {}".format(self.user))
         print("I will pay every one what they deserve")
+
+# Core test mptt
+class CoreVendorTestMpttNode(MPTTModel):
+    # parent = models.ForeignKey("self", on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
+    parent = TreeForeignKey('self', on_delete=models.CASCADE,
+                            null=True, blank=True, related_name='children')
+    marketing_plan = models.ForeignKey(
+        VendorLevelPlans, on_delete=models.CASCADE, null=True)
+
+    class MPTTMeta:
+        order_insertion_by = ['user']
+
+    def __str__(self):
+        return "{} called {} ===>[[{}]]<===".format(self.parent, self.user, self.marketing_plan.plan_name)
+
+    def initiate_nodes_logic(self):
+        print("CUR PARENT => {}".format(self.parent.user))
+        print("CUR USR => {}".format(self.user))
+        print("I will pay every one what they deserve")

@@ -12,67 +12,83 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
         if instance.order_status == 'cmp':
             # order is completed so trigger message here
             # Award sponsor here
-            sponsor = CoreTestMpttNode.objects.get(user=instance.sponsor)
-            allAncestors = sponsor.get_ancestors(
-                include_self=True, ascending=True).order_by('level')
+            # what if there is noone yet
+            global sponsor
+            affilate = Affilate.objects.filter(
+                user=instance.ordered_by
+            )
+            markallet = Marketingwallet.objects.filter(
+                user=instance.ordered_by
+            )
+            if not markallet.exists():
+                Marketingwallet.objects.create(
+                    user=instance.ordered_by
+                )
+            if not affilate.exists():
+                affilate = Affilate.objects.create(
+                    user=instance.ordered_by
+                )
+            elif affilate.exists():
+                affilate = affilate[0]
+            AffilatePlans.objects.create(
+                affilate=affilate,
+                plan_type='core',
+                core_plan=instance.product,
+            )
 
-            print("#"*20)
-            print(sponsor.get_descendants(), "YEAA")
-            money = instance.product
-            print("$"*20)
-            print()
-            # fare = money.
-            # print(money)
-            print("$"*20)
-            allLvl = []
-            print(allAncestors)
-            [allLvl.append({'lvl': x.level, 'usr': str(x.user.user_id)})
-             for x in allAncestors]
-            # print(allLvl,"LLLL")
-            # print(allLvl[::-1],"PLEASE")
-            # [allLvl.append({'lvl': x.level, 'usr': x.user.user_id})
-            #  for x in allAncestors]
-            # reverse the list to reverse the levels
-            allLvl = allLvl[::-1]
-            print(allLvl, "EEE")
-            allDescendants = sponsor.get_descendants()
-            allDirect = []
-            allDown = []
-            [allDirect.append(x) for x in allDescendants if (x.level == 1)]
-            [allDown.append(x) for x in allDescendants if (x.level > 1)]
-            # [AffilatePlans.objects.get(
-            #     affilate=Affilate.objects.get(user=usrs.user), core_plan=money, plan_type='core') for usrs in allAncestors]
-            # except Exception as e:
-            #     print(e)
-            for usrs, x in zip(allAncestors, allLvl):
-                # print(x, "UAA")
-                # po = filter(lambda y: y['usr'] == usrs.user.user_id, allLvl)
-                # print(list(po), "YEA")
-                # print('level{}_percentage'.format(
-                #     usrs.level+1), "===", usrs.user)
-                aff = Affilate.objects.get(user=usrs.user)
-                mWallet = Marketingwallet.objects.get(
-                    user=usrs.user
+            if CoreTestMpttNode.objects.filter(marketing_plan=instance.product).exists():
+                # get the sponsor from the valid input
+                sponsor = CoreTestMpttNode.objects.get(user=instance.sponsor, marketing_plan=instance.product)
+                allAncestors = sponsor.get_ancestors(
+                    include_self=True, ascending=True).order_by('level')
+                money = instance.product
+                # fare = money.
+                allLvl = []
+                [allLvl.append({'lvl': x.level, 'usr': str(x.user.user_id)})
+                 for x in allAncestors]
+                # reverse the list to reverse the levels
+                allLvl = allLvl[::-1]
+                allDescendants = sponsor.get_descendants()
+                allDirect = []
+                allDown = []
+                [allDirect.append(x) for x in allDescendants if (x.level == 1)]
+                [allDown.append(x) for x in allDescendants if (x.level > 1)]
+                for usrs, x in zip(allAncestors, allLvl):
+                    aff = Affilate.objects.get(user=usrs.user)
+                    mWallet = Marketingwallet.objects.get(
+                        user=usrs.user
+                    )
+                    affWallet = Ewallet.objects.get(
+                        user=usrs.user
+                    )
+                    fare = money.__dict__[
+                        'level{}_percentage'.format(x['lvl']+1)]
+                    print(fare, "FAREEE", "{} GIVEN TO {} LEVEL->{}".format(fare,
+                                                                            usrs.user, usrs.level+1))
+                    affWallet.amount += money.joining_fee * fare
+                    affWallet.save()
+                    mWallet.amount += money.joining_fee * fare
+                    mWallet.save()
+                    print(aff, "FARE = {}".format(fare),
+                          "AMT {}".format(money.joining_fee))
+                    aff.save_mplan_data(
+                        len(allDirect), mWallet.amount, len(allDown), money)
+                CoreTestMpttNode.objects.create(
+                    user=instance.ordered_by,
+                    marketing_plan=instance.product,
+                    parent=sponsor
                 )
-                affWallet = Ewallet.objects.get(
-                    user=usrs.user
+            else:
+                CoreTestMpttNode.objects.create(
+                    user=instance.ordered_by,
+                    marketing_plan=instance.product,
+                    parent=None
                 )
-                fare = money.__dict__[
-                    'level{}_percentage'.format(x['lvl']+1)]
-                print(fare, "FAREEE", "{} GIVEN TO {} LEVEL->{}".format(fare,
-                                                                        usrs.user, usrs.level+1))
-                affWallet.amount += money.joining_fee * fare
-                affWallet.save()
-                mWallet.amount += money.joining_fee * fare
-                mWallet.save()
-                print(aff, "FARE = {}".format(fare),
-                      "AMT {}".format(money.joining_fee))
-                aff.save_mplan_data(len(allDirect), mWallet.amount, len(allDown), money)
+                print("NIBBAA")
+                # sponsor = None
 
             instance.paid_already = True
             instance.save()
-            #     usrs.level+1), "===", usrs.user)
-            # for usrs in allAncestors:
 
             print("#"*20)
 

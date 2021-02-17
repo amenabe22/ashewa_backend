@@ -1,6 +1,7 @@
 import graphene
 from .types import CoreUsersType
 from .models import CustomUser
+from core_marketing.models import Marketingwallet, Ewallet
 
 
 class NewUserMutation(graphene.Mutation):
@@ -23,5 +24,8 @@ class NewUserMutation(graphene.Mutation):
         )
         user.set_password(password)
         user.save()
-
+        Marketingwallet.objects.create(
+            user=user
+        )
+        Ewallet.objects.create(user=user)
         return NewUserMutation(payload=user)

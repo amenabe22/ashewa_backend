@@ -101,41 +101,64 @@ class CreateCoreMlmOrder(graphene.Mutation):
         binfo = BillingInfo.objects.create(
             full_name=full_name, address=address, phone=phone
         )
-        try:
-            core_plan = CoreLevelPlans.objects.get(
-                core_id=mlm)
-            if(sponsor == str(info.context.user.user_id)):
-                raise Exception("User can't be a sponsor")
-            # get sponsor and add to the layer
-            _ord = CoreMlmOrders.objects.create(
-                billing_info=binfo, product=core_plan,
-                ordered_by=info.context.user, sponsor=CustomUser.objects.get(
-                    user_id=sponsor
-                ))
-            sponsor_user = CustomUser.objects.get(user_id=sponsor)
-            # if this marketing plan is getting registered for the first time then consider it as the first ancestor of the whole network
-            if CoreTestMpttNode.objects.filter(marketing_plan=core_plan, user=info.context.user, parent=CoreTestMpttNode.objects.get(
-                user=sponsor_user
-            )).exists():
-                raise Exception("Layer already exists")
+        # try:
+        print(CoreLevelPlans.objects.all())
+        core_plan = CoreLevelPlans.objects.get(core_id=mlm)
+        print("A"*20, mlm)
+        if(sponsor == str(info.context.user.user_id)):
+            raise Exception("User can't be a sponsor")
 
-            if not CoreTestMpttNode.objects.filter(marketing_plan=core_plan).exists():
-                # first ancestors don't have any parent
-                mlmNode = CoreTestMpttNode.objects.create(
-                    user=info.context.user, parent=None, marketing_plan=core_plan)
-            else:
-                # old code pop this off later
-                # if CoreTestMpttNode.objects.filter(user=info.context.user)
-                mlmNode = CoreTestMpttNode.objects.create(
-                    user=info.context.user, parent=CoreTestMpttNode.objects.get(
-                        user=sponsor_user
-                    ),
-                    # setup marketing plan in the nodes
-                    marketing_plan=core_plan
-                )
-            mlmNode.initiate_nodes_logic()
-        except Exception as e:
-            raise Exception("ERROR: Order {}".format(str(e)))
+        # check if the layer exists
+        if CoreMlmOrders.objects.filter(ordered_by=info.context.user, product=core_plan).exists():
+            raise Exception("Plan is already purchased")
+
+        sponsor_user = CustomUser.objects.get(user_id=sponsor)
+        # check if the order is being sent by the wrong sponsor
+        if not CoreTestMpttNode.objects.filter(user=CustomUser.objects.get(user_id=sponsor), marketing_plan=core_plan).exists():
+            raise Exception("Invalid sponsor selected")
+        if CoreTestMpttNode.objects.filter(
+                user=sponsor_user).exists():
+            parent =CoreTestMpttNode.objects.get(user=sponsor_user, marketing_plan=core_plan)
+            # print(core_plan, info.context.user, CoreTestMpttNode.objects.filter(user=sponsor_user, marketing_plan=core_plan), "SSSSSSSS")
+            if CoreTestMpttNode.objects.filter(marketing_plan=core_plan, user=info.context.user, parent=parent).exists():
+                raise Exception("Layer already exists")
+        # get sponsor and add to the layer
+        _ord = CoreMlmOrders.objects.create(
+            billing_info=binfo, product=core_plan,
+            ordered_by=info.context.user, sponsor=CustomUser.objects.get(
+                user_id=sponsor
+            ))
+        # if this marketing plan is getting registered for the first time then consider it as the first ancestor of the whole network
+        print(CoreTestMpttNode.objects.filter(
+            user=sponsor_user).exists(), "HEYYY")
+        # print("DEBUG")
+
+        # if not CoreTestMpttNode.objects.filter(marketing_plan=core_plan).exists():
+        #     # first ancestors don't have any parent
+        #     mlmNode = CoreTestMpttNode.objects.create(
+        #         user=info.context.user, parent=None, marketing_plan=core_plan)
+        # else:
+        #     # old code pop this off later
+        #     # if CoreTestMpttNode.objects.filter(user=info.context.user)
+        #     # create the order object ma man
+        #     CoreMlmOrders.objects.create(
+        #         billing_info=BillingInfo.objects.create(
+        #             full_name=full_name, address=address, phone=phone
+        #         ),
+        #         ordered_by=info.context.user,
+        #         product=core_plan,
+        #         sponsor=sponsor_user
+        #     )
+        #     mlmNode = CoreTestMpttNode.objects.create(
+        #         user=info.context.user, parent=CoreTestMpttNode.objects.get(
+        #             user=sponsor_user
+        #         ),
+        #         # setup marketing plan in the nodes
+        #         marketing_plan=core_plan
+        #     )
+        # mlmNode.initiate_nodes_logic()
+        # except Exception as e:
+        #     raise Exception("ERROR: Order {}".format(str(e)))
 
         return CreateCoreMlmOrder(payload=True)
 

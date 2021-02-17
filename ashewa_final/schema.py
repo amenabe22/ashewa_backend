@@ -27,7 +27,7 @@ from core_ecommerce.product_mutations import(EditProduct,
                                              NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
 from core_marketing.marketing_mutations import (EmptyCart,
-    AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage, EditVendorLevelPackage)
+                                                AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage, EditVendorLevelPackage)
 from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
 from django.forms.models import model_to_dict
@@ -111,6 +111,23 @@ class Query(graphene.ObjectType):
     user_orders = graphene.List(UsrOrderType)
     vendor_package_detail = graphene.Field(
         VendorPlanType, plan=graphene.String())
+    core_package_detail = graphene.Field(
+        CoreMarketingPlanTypes, plan=graphene.String()
+    )
+    search_user = graphene.List(
+        CoreUsersType, query=graphene.String()
+    )
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_search_user(self, info, query):
+        return CustomUser.objects.filter(username__icontains=query).exclude(username=info.context.user.username)
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_core_package_detail(self, info, plan):
+        plan = CoreLevelPlans.objects.filter(core_id=plan)
+        if not plan.exists():
+            raise Exception("Package not found")
+        return plan[0]
 
     @permissions_checker([IsAuthenticated])
     def resolve_vendor_package_detail(self, info, plan):
@@ -129,9 +146,9 @@ class Query(graphene.ObjectType):
         # core_plan = CoreLevelPlans(core_id=plan)
         core_plan = aff.core_plan
         print("DEBUG")
-        print(aff.core_plan.plan_name)
+        print(core_plan, "PLAN")
         userMptt = CoreTestMpttNode.objects.get(marketing_plan=core_plan,
-                                                user=CustomUser.objects.get(username=info.context.user))
+                                                user=info.context.user)
         allAncestors = userMptt.get_ancestors()
         allDownline = userMptt.get_descendants()
         allDown = []

@@ -13,7 +13,7 @@ class CustomUser(AbstractUser):
     is_blocked = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.username
+        return str(self.username)
 
 
 class UserProfile(models.Model):
@@ -137,7 +137,7 @@ class Affilate(models.Model):
 
     def save_mplan_data(self, all_direct, total_earned, total_downline, mplan):
         # aff = Affilate.objects.get(user=self.user)
-        print(AffilatePlans.objects.get(affilate=self))
+        # print(AffilatePlans.objects.get(affilate=self))
         # sponsors_aff_plan = AffilatePlans.objects.get(
         #     affilate=self, core_plan=mplan, plan_type='core')
         # sponsors_aff_plan.total_direct_referrals = all_direct
@@ -145,3 +145,4 @@ class Affilate(models.Model):
         # sponsors_aff_plan.total_downline = total_downline
         # sponsors_aff_plan.save()
         # print(mplan,"PLEASEEEE LORD")
+        pass
