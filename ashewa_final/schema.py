@@ -26,7 +26,7 @@ from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTy
 from core_ecommerce.product_mutations import(EditProduct,
                                              NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import (EmptyCart,
+from core_marketing.marketing_mutations import (EmptyCart,CreateVendorPackageOrder,
                                                 AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage, EditVendorLevelPackage)
 from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
@@ -542,7 +542,8 @@ class Mutations(graphene.ObjectType):
     create_genv2 = CreateGenv2.Field(description="create generation for the ")
     create_cmlm_order = CreateCoreMlmOrder.Field(
         description="create core mlm initial order")
-
+    create_vmlm_order = CreateVendorPackageOrder.Field(
+        description="create Mlm Order for vendor")
     edit_product = EditProduct.Field(
         description="Edit Products"
     )

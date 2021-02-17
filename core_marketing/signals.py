@@ -3,7 +3,96 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .core_manager import UniLevelMarketingNetworkManager
 from accounts.models import Affilate, CustomUser, CoreLevelPlans
-from .models import UnilevelNetwork, AffilatePlans, CoreMlmOrders, CoreTestMpttNode, Ewallet, Marketingwallet
+from .models import (UnilevelNetwork, AffilatePlans, CoreMlmOrders, CoreVendorTestMpttNode,
+                     CoreTestMpttNode, Ewallet, Marketingwallet, CoreVendorMlmOrders)
+
+
+@receiver(post_save, sender=CoreVendorMlmOrders)
+def core_vendor_mlm_order_approval_handler(sender, instance, **kwargs):
+    if not instance.paid_already:
+        if instance.order_status == 'cmp':
+            # order is completed so trigger message here
+            # Award sponsor here
+            # what if there is noone yet
+            global sponsor
+            affilate = Affilate.objects.filter(
+                user=instance.ordered_by
+            )
+            markallet = Marketingwallet.objects.filter(
+                user=instance.ordered_by
+            )
+            if not markallet.exists():
+                Marketingwallet.objects.create(
+                    user=instance.ordered_by
+                )
+            if not affilate.exists():
+                affilate = Affilate.objects.create(
+                    user=instance.ordered_by
+                )
+            elif affilate.exists():
+                affilate = affilate[0]
+            AffilatePlans.objects.create(
+                affilate=affilate,
+                plan_type='ven',
+                vendor_plan=instance.product,
+            )
+
+            if CoreVendorTestMpttNode.objects.filter(marketing_plan=instance.product).exists():
+                # get the sponsor from the valid input
+                sponsor = CoreVendorTestMpttNode.objects.get(
+                    user=instance.sponsor, marketing_plan=instance.product)
+                allAncestors = sponsor.get_ancestors(
+                    include_self=True, ascending=True).order_by('level')
+                money = instance.product
+                # fare = money.
+                allLvl = []
+                [allLvl.append({'lvl': x.level, 'usr': str(x.user.user_id)})
+                 for x in allAncestors]
+                # reverse the list to reverse the levels
+                allLvl = allLvl[::-1]
+                allDescendants = sponsor.get_descendants()
+                allDirect = []
+                allDown = []
+                [allDirect.append(x) for x in allDescendants if (x.level == 1)]
+                [allDown.append(x) for x in allDescendants if (x.level > 1)]
+                for usrs, x in zip(allAncestors, allLvl):
+                    aff = Affilate.objects.get(user=usrs.user)
+                    mWallet = Marketingwallet.objects.get(
+                        user=usrs.user
+                    )
+                    affWallet = Ewallet.objects.get(
+                        user=usrs.user
+                    )
+                    fare = money.__dict__[
+                        'level{}_percentage'.format(x['lvl']+1)]
+                    print(fare, "FAREEE", "{} GIVEN TO {} LEVEL->{}".format(fare,
+                                                                            usrs.user, usrs.level+1))
+                    affWallet.amount += money.purchase_bonus * fare
+                    affWallet.save()
+                    mWallet.amount += money.purchase_bonus * fare
+                    mWallet.save()
+                    print(aff, "FARE = {}".format(fare),
+                          "AMT {}".format(money.purchase_bonus))
+                    aff.save_mplan_data(
+                        len(allDirect), mWallet.amount, len(allDown), money)
+                CoreVendorTestMpttNode.objects.create(
+                    user=instance.ordered_by,
+                    marketing_plan=instance.product,
+                    parent=sponsor
+                )
+            else:
+                CoreVendorTestMpttNode.objects.create(
+                    user=instance.ordered_by,
+                    marketing_plan=instance.product,
+                    parent=None
+                )
+                print("NIBBAA")
+                # sponsor = None
+
+            instance.paid_already = True
+            instance.save()
+
+            print("#"*20)
 
 
 @receiver(post_save, sender=CoreMlmOrders)
@@ -38,7 +127,8 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
 
             if CoreTestMpttNode.objects.filter(marketing_plan=instance.product).exists():
                 # get the sponsor from the valid input
-                sponsor = CoreTestMpttNode.objects.get(user=instance.sponsor, marketing_plan=instance.product)
+                sponsor = CoreTestMpttNode.objects.get(
+                    user=instance.sponsor, marketing_plan=instance.product)
                 allAncestors = sponsor.get_ancestors(
                     include_self=True, ascending=True).order_by('level')
                 money = instance.product

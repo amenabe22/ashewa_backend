@@ -19,7 +19,7 @@ class CoreTestMpttNodeAdmin(admin.ModelAdmin):
 
 
 class CoreVendorTestMpttNodeAdmin(admin.ModelAdmin):
-    list_display = ('marketing_plan', 'level', 'parent', )
+    list_display = ('user', 'marketing_plan', 'level', 'parent', )
 
 
 class UserMessagesAdmin(admin.ModelAdmin):

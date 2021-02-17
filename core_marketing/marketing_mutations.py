@@ -11,7 +11,7 @@ from django_graphene_permissions.permissions import IsAuthenticated
 from accounts.models import CustomUser
 from ashewa_final.core_perimssions import VendorsPermission
 # from core_perimssions import VendorsPermission, AffilatePermission
-from core_marketing.models import TestNetwork, CoreTestMpttNode, CoreLevelPlans, CoreMlmOrders, CoreVendorMlmOrders, BillingInfo
+from core_marketing.models import TestNetwork, CoreTestMpttNode, CoreLevelPlans, CoreMlmOrders, CoreVendorMlmOrders, BillingInfo, CoreVendorTestMpttNode
 from core_marketing.types import CoreTestMpttType, CoreMlmOrderType, CoreVendorMlmOrderType
 UUID_PATTERN = re.compile(
     r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
@@ -86,7 +86,7 @@ class CreateVendorPackage(graphene.Mutation):
         return CreateVendorPackage(payload=plan)
 
 
-class CreateCoreMlmOrder(graphene.Mutation):
+class CreateVendorPackageOrder(graphene.Mutation):
     payload = graphene.Boolean()
 
     class Arguments:
@@ -101,7 +101,56 @@ class CreateCoreMlmOrder(graphene.Mutation):
         binfo = BillingInfo.objects.create(
             full_name=full_name, address=address, phone=phone
         )
-        # try:
+        vend_plan = VendorLevelPlans.objects.get(core_id=mlm)
+        if(sponsor == str(info.context.user.user_id)):
+            raise Exception("User can't be a sponsor")
+        if CoreVendorMlmOrders.objects.filter(ordered_by=info.context.user, product=vend_plan).exists():
+            raise Exception("Package is already purchased")
+        sponsor_user = CustomUser.objects.get(user_id=sponsor)
+        if not CoreVendorTestMpttNode.objects.filter(user=CustomUser.objects.get(user_id=sponsor), marketing_plan=vend_plan).exists():
+            if not CoreVendorTestMpttNode.objects.filter(marketing_plan=vend_plan, parent=None).exists():
+                # this is the first ancestor
+                pass
+                # parent = CoreTestMpttNode.objects.get(
+                #     marketing_plan=core_plan, parent=None)
+                # if CoreTestMpttNode.objects.filter(marketing_plan=core_plan, user=info.context.user, parent=parent).exists():
+                #     raise Exception("Layer already exists")
+            else:
+                raise Exception("Invalid sponsor selected")
+        if CoreVendorTestMpttNode.objects.filter(
+                user=sponsor_user).exists():
+            parent = CoreVendorTestMpttNode.objects.get(
+                user=sponsor_user, marketing_plan=vend_plan)
+            # print(core_plan, info.context.user, CoreTestMpttNode.objects.filter(user=sponsor_user, marketing_plan=core_plan), "SSSSSSSS")
+            if CoreVendorTestMpttNode.objects.filter(marketing_plan=vend_plan, user=info.context.user, parent=parent).exists():
+                raise Exception("Layer already exists")
+        # create the order now
+        CoreVendorMlmOrders.objects.create(
+            billing_info=binfo, product=vend_plan,
+            ordered_by=info.context.user, sponsor=CustomUser.objects.get(
+                user_id=sponsor
+            ))
+
+        return CreateVendorPackageOrder(payload=True)
+
+
+class CreateCoreMlmOrder(graphene.Mutation):
+    # core mlm order for default packages provided by the company
+    payload = graphene.Boolean()
+
+    class Arguments:
+        full_name = graphene.String()
+        address = graphene.String()
+        phone = graphene.String()
+        mlm = graphene.String()
+        sponsor = graphene.String()
+
+    @permissions_checker([IsAuthenticated])
+    def mutate(self, info, full_name, address, phone, mlm, sponsor):
+        binfo = BillingInfo.objects.create(
+            full_name=full_name, address=address, phone=phone
+        )
+
         print(CoreLevelPlans.objects.all())
         core_plan = CoreLevelPlans.objects.get(core_id=mlm)
         print("A"*20, mlm)
@@ -115,10 +164,24 @@ class CreateCoreMlmOrder(graphene.Mutation):
         sponsor_user = CustomUser.objects.get(user_id=sponsor)
         # check if the order is being sent by the wrong sponsor
         if not CoreTestMpttNode.objects.filter(user=CustomUser.objects.get(user_id=sponsor), marketing_plan=core_plan).exists():
-            raise Exception("Invalid sponsor selected")
+            if not CoreTestMpttNode.objects.filter(marketing_plan=core_plan, parent=None).exists():
+                # this is the first ancestor
+                pass
+                # parent = CoreTestMpttNode.objects.get(
+                #     marketing_plan=core_plan, parent=None)
+                # if CoreTestMpttNode.objects.filter(marketing_plan=core_plan, user=info.context.user, parent=parent).exists():
+                #     raise Exception("Layer already exists")
+            else:
+                raise Exception("Invalid sponsor selected")
         if CoreTestMpttNode.objects.filter(
                 user=sponsor_user).exists():
-            parent =CoreTestMpttNode.objects.get(user=sponsor_user, marketing_plan=core_plan)
+            parent = CoreTestMpttNode.objects.filter(
+                user=sponsor_user, marketing_plan=core_plan)
+            if not parent.exists():
+                print("ERRR")
+                raise Exception("Invalid sponsor selected")
+            else:
+                parent = parent[0]
             # print(core_plan, info.context.user, CoreTestMpttNode.objects.filter(user=sponsor_user, marketing_plan=core_plan), "SSSSSSSS")
             if CoreTestMpttNode.objects.filter(marketing_plan=core_plan, user=info.context.user, parent=parent).exists():
                 raise Exception("Layer already exists")

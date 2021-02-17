@@ -57,10 +57,13 @@ class CoreVendorMlmOrders(models.Model):
     billing_info = models.ForeignKey(
         BillingInfo, on_delete=models.CASCADE, null=True)
     order_id = models.UUIDField(default=uuid4, editable=False)
-    ordered_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    ordered_by = models.ForeignKey(
+        CustomUser, related_name='ordered_by', on_delete=models.CASCADE)
+   # ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     product = models.ForeignKey(
-        to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
+        to='vendors.VendorLevelPlans', on_delete=models.CASCADE,  null=True)
+    sponsor = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, related_name='vsponsor', blank=True)
     timestamp = models.DateTimeField(
         auto_now_add=True, editable=True, null=True)
     order_status = models.CharField(
@@ -79,6 +82,7 @@ class Ewallet(models.Model):
 
     def __str__(self):
         return "{} **{} ETB**".format(self.user.username, self.amount)
+
 
 class Marketingwallet(models.Model):
     wallet_id = models.UUIDField(
@@ -388,6 +392,8 @@ class CoreTestMpttNode(MPTTModel):
         print("I will pay every one what they deserve")
 
 # Core test mptt
+
+
 class CoreVendorTestMpttNode(MPTTModel):
     # parent = models.ForeignKey("self", on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
