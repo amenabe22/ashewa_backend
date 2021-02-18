@@ -15,7 +15,7 @@ class LayerAdmin(admin.ModelAdmin):
 
 
 class CoreTestMpttNodeAdmin(admin.ModelAdmin):
-    list_display = ('marketing_plan', 'level', 'parent', )
+    list_display = ('user', 'marketing_plan', 'level', 'parent', )
 
 
 class CoreVendorTestMpttNodeAdmin(admin.ModelAdmin):
@@ -34,8 +34,7 @@ class CoreVendorMlmOrdersAdmin(admin.ModelAdmin):
 class CoreMlmOrdersAdmin(admin.ModelAdmin):
     list_display = ('ordered_by', 'product',
                     'order_status', 'paid_already',)
-
-
+    list_editable = ('order_status', )
     # list_editable = ('affilate',)
 admin.site.register(CoreLevelPlans)
 admin.site.register(CoreBrand)

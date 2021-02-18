@@ -379,6 +379,7 @@ class CoreTestMpttNode(MPTTModel):
                             null=True, blank=True, related_name='children')
     marketing_plan = models.ForeignKey(
         CoreLevelPlans, on_delete=models.CASCADE, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
     class MPTTMeta:
         order_insertion_by = ['user']
@@ -401,6 +402,7 @@ class CoreVendorTestMpttNode(MPTTModel):
                             null=True, blank=True, related_name='children')
     marketing_plan = models.ForeignKey(
         VendorLevelPlans, on_delete=models.CASCADE, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
     class MPTTMeta:
         order_insertion_by = ['user']

@@ -1,6 +1,6 @@
 import graphene
 from .types import CoreUsersType
-from .models import CustomUser
+from .models import CustomUser, Affilate
 from core_marketing.models import Marketingwallet, Ewallet
 
 
@@ -28,4 +28,5 @@ class NewUserMutation(graphene.Mutation):
             user=user
         )
         Ewallet.objects.create(user=user)
+        Affilate.objects.create(user=user)
         return NewUserMutation(payload=user)

@@ -16,7 +16,7 @@ from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(LandingCarousel,
                                   Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
-from core_marketing.models import (CoreLevelPlans, UnilevelNetwork, AffilatePlans,
+from core_marketing.models import (CoreLevelPlans, UnilevelNetwork, AffilatePlans, CoreVendorTestMpttNode,
                                    TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode, Marketingwallet, CoreMlmOrders)
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
                           OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType)
@@ -26,7 +26,7 @@ from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTy
 from core_ecommerce.product_mutations import(EditProduct,
                                              NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import (EmptyCart,CreateVendorPackageOrder,
+from core_marketing.marketing_mutations import (EmptyCart, CreateVendorPackageOrder,
                                                 AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage, EditVendorLevelPackage)
 from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
@@ -108,6 +108,7 @@ class Query(graphene.ObjectType):
     get_core_docs = graphene.List(CoreDocsType)
     test_me = graphene.String()
     get_genv2 = graphene.JSONString(plan=graphene.String())
+    get_vendor_plan_genv2 = graphene.JSONString(plan=graphene.String())
     user_orders = graphene.List(UsrOrderType)
     vendor_package_detail = graphene.Field(
         VendorPlanType, plan=graphene.String())
@@ -141,22 +142,83 @@ class Query(graphene.ObjectType):
         return [{'ords': _vend_ords, 'core_ord': _mlm_ords}]
 
     @permissions_checker([IsAuthenticated])
+    def resolve_get_vendor_plan_genv2(self, info, plan):
+        aff = AffilatePlans.objects.get(plan_id=plan)
+        core_plan = aff.vendor_plan
+        current_mptt = CoreVendorTestMpttNode.objects.get(
+            user=info.context.user, marketing_plan=core_plan)
+        allDownline = current_mptt.get_descendants()
+        allDown = []
+        allDirect = []
+        for des in allDownline:
+            if(des.parent == current_mptt):
+                allDirect.append(des)
+            else:
+                print("@@"*20)
+                allDown.append(des)
+                print(des)
+                print(des.parent == current_mptt)
+                print("@@"*20)
+        mWallet = Marketingwallet.objects.get(user=info.context.user).amount
+
+        finData = {'total_earned': mWallet, 'total_downlines': len(
+            allDown), 'total_direct': len(allDirect), 'plan_name': core_plan.plan_name}
+
+        return finData
+
+    @permissions_checker([IsAuthenticated])
     def resolve_get_genv2(self, info, plan):
         aff = AffilatePlans.objects.get(plan_id=plan)
         # core_plan = CoreLevelPlans(core_id=plan)
         core_plan = aff.core_plan
         print("DEBUG")
+        current_mptt = CoreTestMpttNode.objects.get(
+            user=info.context.user, marketing_plan=core_plan)
         print(core_plan, "PLAN")
-        userMptt = CoreTestMpttNode.objects.get(marketing_plan=core_plan,
-                                                user=info.context.user)
-        allAncestors = userMptt.get_ancestors()
-        allDownline = userMptt.get_descendants()
+        # userMptt = CoreTestMpttNode.objects.get(marketing_plan=core_plan,
+        #                                         user=info.context.user)
+        # allAncestors = userMptt.get_ancestors()
+        allDownline = current_mptt.get_descendants()
         allDown = []
         allDirect = []
-        print("DEBUG")
+        for des in allDownline:
+            if(des.parent == current_mptt):
+                allDirect.append(des)
+            else:
+                print("@@"*20)
+                allDown.append(des)
+                print(des)
+                print(des.parent == current_mptt)
+                print("@@"*20)
+        # print("DEBUG")
         mWallet = Marketingwallet.objects.get(user=info.context.user).amount
-        [allDown.append(x) for x in allDownline if (x.level > 1)]
-        [allDirect.append(x) for x in allDownline if (x.level == 1)]
+        # [allDown.append(x) for x in allDownline if (x.level > 1)]
+        # [allDirect.append(x) for x in allDownline if (x.level == 1)]
+        # for x in allDownline:
+        #     print(x.user, x.level, x.marketing_plan)
+        # print(allDirect, "ALLDRI")
+        # TODO: Start from where you left off
+        # qset = CoreTestMpttNode.objects.filter(
+        #     user=info.context.user, marketing_plan=core_plan
+        # ).filter(timestamp__year=year,
+        #          timestamp__month=month
+        #          ).annotate(
+        #     day=ExtractDay('timestamp'),
+        # ).values(
+        #     'day'
+        # ).annotate(
+        #     n=Count('pk')
+        # ).order_by('day')
+        # print(qset, "QSET IS HERe")
+        #  tq = totalSold.filter(timestamp__year=year,
+        #                       timestamp__month=month
+        #                       ).annotate(
+        #     day=ExtractDay('timestamp'),
+        # ).values(
+        #     'day'
+        # ).annotate(
+        #     n=Count('pk')
+        # ).order_by('day')
         finData = {'total_earned': mWallet, 'total_downlines': len(
             allDown), 'total_direct': len(allDirect), 'plan_name': core_plan.plan_name}
         # print("ALL DLINE {}".format(len(allDown)))
