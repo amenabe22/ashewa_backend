@@ -118,6 +118,50 @@ class Query(graphene.ObjectType):
     search_user = graphene.List(
         CoreUsersType, query=graphene.String()
     )
+    get_descendants = graphene.List(
+        CoreUsersType, plan=graphene.String(), current=graphene.Boolean(),
+        usr=graphene.String(), ptype=graphene.String()
+    )
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_get_descendants(self, info, plan, current, usr, ptype):
+        global user
+        allUsrs = []
+        types = ['vend', 'core']
+        if not ptype in types:
+            raise Exception("Package type not found !!")
+        if current:
+            user = info.context.user
+        else:
+            try:
+                user = CustomUser.objects.get(
+                    user_id=usr
+                )
+            except:
+                raise Exception("User not found")
+        if ptype == 'core':
+            # print(plan,"HEREIS DA PLAN")
+            # [print(x.core_id) for x in CoreLevelPlans.objects.all()]
+            affile = AffilatePlans.objects.get(plan_id=plan)
+            plan = affile.core_plan
+            # print(plan, "Package", user, "user IS HERE")
+            # print(CoreTestMpttNode.objects.filter(marketing_plan=plan))
+            tree = CoreTestMpttNode.objects.filter(
+                user=user, marketing_plan=plan)
+            if not tree.exists():
+                raise Exception("Activity not found !")
+            for tr in tree.get_descendants():
+                allUsrs.append(tr.user)
+            # print(tree.get_descendants(),"SSSSSSSs")
+        elif ptype == 'vend':
+            affile = AffilatePlans.objects.get(plan_id=plan)
+            plan = affile.core_plan
+            tree = CoreVendorTestMpttNode.objects.filter(
+                user=user, marketing_plan=plan)
+            if not tree.exists():
+                raise Exception("Activity not found !")
+            print(tree, ptype)
+        return allUsrs
 
     @permissions_checker([IsAuthenticated])
     def resolve_search_user(self, info, query):
@@ -171,7 +215,7 @@ class Query(graphene.ObjectType):
         aff = AffilatePlans.objects.get(plan_id=plan)
         # core_plan = CoreLevelPlans(core_id=plan)
         core_plan = aff.core_plan
-        print("DEBUG")
+        print("DEBUG", core_plan)
         current_mptt = CoreTestMpttNode.objects.get(
             user=info.context.user, marketing_plan=core_plan)
         print(core_plan, "PLAN")
