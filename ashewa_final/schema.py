@@ -6,11 +6,11 @@ from .admin_mutations import CreateMarketingPlans
 from core_ecommerce.types import (LandingCarsType, LandingCatBlockType, UsrOrderType,
                                   ProductImageType, ProductsType, ParentCategoryType,
                                   CategoryType, SubCatsType, ProductsPaginatedType)
-from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart, PopCart
+from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart, PopCart, UpdateStoreData
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
-from accounts.account_mutations import NewUserMutation
+from accounts.account_mutations import NewUserMutation, EditProfile, ChangePasswordMutation
 from accounts.types import CoreUsersType, UsersDataType
 from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(LandingCarousel,
@@ -122,6 +122,7 @@ class Query(graphene.ObjectType):
         CoreUsersType, plan=graphene.String(), current=graphene.Boolean(),
         usr=graphene.String(), ptype=graphene.String()
     )
+    get_store_data = graphene.Field(VendorType)
 
     @permissions_checker([IsAuthenticated])
     def resolve_get_descendants(self, info, plan, current, usr, ptype):
@@ -491,6 +492,11 @@ class Query(graphene.ObjectType):
         return affplan
         # here is where the plans data is rendered
 
+    @ permissions_checker([VendorsPermission, IsAuthenticated])
+    def resolve_get_store_data(self, info):
+        st = Vendor.objects.filter(user=info.context.user)
+        return st[0]
+
     def resolve_store_meta_data(self, info, store):
         return Vendor.objects.filter(vendor_id=store)
 
@@ -663,6 +669,9 @@ class Mutations(graphene.ObjectType):
     empty_cart = EmptyCart.Field(
         description="Empty users's cart"
     )
+    update_profile = EditProfile.Field()
+    update_store = UpdateStoreData.Field()
+    update_password = ChangePasswordMutation.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

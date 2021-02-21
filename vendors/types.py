@@ -62,5 +62,4 @@ class OrdersPaginatedType(graphene.ObjectType):
     has_prev = graphene.Boolean()
     objects = graphene.List(OrdersType)
     total = graphene.Int()
-
-
+    

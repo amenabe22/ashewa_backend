@@ -30,3 +30,32 @@ class NewUserMutation(graphene.Mutation):
         Ewallet.objects.create(user=user)
         Affilate.objects.create(user=user)
         return NewUserMutation(payload=user)
+
+
+class EditProfile(graphene.Mutation):
+    payload = graphene.Field(CoreUsersType)
+
+    class Arguments:
+        full_name = graphene.String()
+        email = graphene.String()
+        username = graphene.String()
+        phone = graphene.String()
+    def mutate(self, info, username,  full_name, email, phone):
+        user = CustomUser.objects.filter(user_id=info.context.user.user_id)
+        # user.set_password(password=password)
+        if not user.exists(): raise Exception("user not found")
+        user.update(username=username, phone=phone, full_name=full_name, email=email)
+        return EditProfile(payload=user[0])
+
+class ChangePasswordMutation(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        password = graphene.String()
+
+    def mutate(self, info, password):
+        user = CustomUser.objects.get(user_id=info.context.user.user_id)
+        user.set_password(password)
+        user.save()
+
+        return ChangePasswordMutation(payload=True)

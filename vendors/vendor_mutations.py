@@ -141,15 +141,24 @@ class CreateVendorPlans(graphene.Mutation):
         pass
         return CreateVendorPlans(payload=True)
 
-# class CreateVenodrGallery(graphene.Mutation):
-#     payload = graphene.Boolean()
+class UpdateStoreData(graphene.Mutation):
+    payload = graphene.String()
 
-#     class Arguments:
-#         image = Upload()
-#         img_desc = graphene.String()
+    class Arguments:
+        store_name = graphene.String()
+        store_desc = graphene.String()
 
-#         @permissions_checker([VendorsPermission])
-#         def mutate(self, info, image, img_desc):
-#             vendG = VenodrGallery.objects.all()
-#             vendG.image = image
-#             img_desc = img_desc
+    @permissions_checker([VendorsPermission])
+    def mutate(self, info, store_name, store_desc):
+        try:
+            vend = Vendor.objects.get(
+                user=info.context.user
+            )
+            vend.store_name = store_name
+            vend.store_desc = store_desc
+            vend.save()
+        except Exception as e:
+            raise Exception(str(e))
+
+        return UpdateStoreData(payload=True)
+
