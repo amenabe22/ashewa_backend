@@ -106,11 +106,10 @@ class Social(models.Model):
     icon_color = models.CharField(max_length=100, null=True)
 
 class VendorCeoImgs(models.Model):
-    store_name = models.ForeignKey(Vendor, on_delete=models.CASCADE, null=True)
     ceo_img = models.ImageField(upload_to='about/ceo/image', null=True)
 
 class VendorData(models.Model):
-    store_name = models.ForeignKey(Vendor, on_delete=models.CASCADE, null=True)
+    store_name = models.OneToOneField(Vendor, on_delete=models.CASCADE, null=True)
     store_desc = models.TextField(null=True)
     phone = models.CharField(max_length=250, null=True)
     email = models.CharField(max_length=250, null=True)

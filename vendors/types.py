@@ -1,6 +1,6 @@
 import graphene
 from graphene_django import DjangoObjectType
-from .models import Vendor, VendorLevelPlans, Cart, Order, VenodrGallery, VendorData
+from .models import Vendor, VendorLevelPlans, Cart, Order, VenodrGallery, VendorData,VendorCeoImgs
 
 class VenodrGalleryType(DjangoObjectType):
     class Meta:
@@ -67,3 +67,8 @@ class VendorDataType(DjangoObjectType):
     class Meta:
         model = VendorData
         fields = '__all__'
+
+
+class VendorDataImageType(DjangoObjectType):
+    class Meta:
+        model = VendorCeoImgs
