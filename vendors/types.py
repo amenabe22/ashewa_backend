@@ -1,6 +1,6 @@
 import graphene
 from graphene_django import DjangoObjectType
-from .models import Vendor, VendorLevelPlans, Cart, Order, VenodrGallery
+from .models import Vendor, VendorLevelPlans, Cart, Order, VenodrGallery, VendorData
 
 class VenodrGalleryType(DjangoObjectType):
     class Meta:
@@ -63,3 +63,7 @@ class OrdersPaginatedType(graphene.ObjectType):
     objects = graphene.List(OrdersType)
     total = graphene.Int()
     
+class VendorDataType(DjangoObjectType):
+    class Meta:
+        model = VendorData
+        fields = '__all__'

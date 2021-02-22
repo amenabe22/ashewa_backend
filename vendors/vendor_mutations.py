@@ -1,7 +1,7 @@
 import graphene
 from graphene_file_upload.scalars import Upload
 from vendors.models import Vendor, VendorLevelPlans
-from .models import VendorLevelPlans, Vendor, Order, Cart, VenodrGallery
+from .models import VendorLevelPlans, Vendor, Order, Cart, VenodrGallery, VendorData
 from django_graphene_permissions import permissions_checker
 from ashewa_final.core_perimssions import VendorsPermission, AdminPermission
 from django_graphene_permissions.permissions import IsAuthenticated
@@ -141,12 +141,12 @@ class CreateVendorPlans(graphene.Mutation):
         pass
         return CreateVendorPlans(payload=True)
 
+
 class UpdateStoreData(graphene.Mutation):
     payload = graphene.String()
 
     class Arguments:
         store_name = graphene.String()
-        store_desc = graphene.String()
 
     @permissions_checker([VendorsPermission])
     def mutate(self, info, store_name, store_desc):
@@ -155,10 +155,32 @@ class UpdateStoreData(graphene.Mutation):
                 user=info.context.user
             )
             vend.store_name = store_name
-            vend.store_desc = store_desc
             vend.save()
         except Exception as e:
             raise Exception(str(e))
 
         return UpdateStoreData(payload=True)
 
+
+class VendorDataAdd(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        store_desc = graphene.String()
+        video_url = graphene.String()
+        phone = graphene.String()
+        email = graphene.String()
+
+    @permissions_checker([IsAuthenticated])
+    def mutate(self, info, store_desc, video_url, phone, email):
+        vend = Vendor.objects.get(
+            user=info.context.user
+        )
+        venData = VendorData.objects.create(store_name=vend)
+        venData.store_desc = store_desc
+        venData.video_url = video_url
+        venData.phone = phone
+        venData.email = email
+
+        venData.save()
+        return VendorDataAdd(payload=True)

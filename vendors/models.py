@@ -15,7 +15,6 @@ class Vendor(models.Model):
         default=uuid4, editable=False, primary_key=True)
     user = models.OneToOneField(CustomUser, on_delete=models.Model)
     store_name = models.CharField(max_length=800, null=True, blank=True)
-    store_desc = models.TextField(blank=True, null=True)
     store_cover = models.ImageField(
         upload_to='store/image', null=True, blank=True)
     store_gallery = models.ManyToManyField(VenodrGallery, blank=True)
@@ -100,3 +99,25 @@ class Order(models.Model):
 
     def __str__(self):
         return str(self.core_order_id)
+
+class Social(models.Model):
+    social_name = models.CharField(max_length=100)
+    social_icon = models.CharField(max_length=100)
+    icon_color = models.CharField(max_length=100, null=True)
+
+class VendorCeoImgs(models.Model):
+    store_name = models.ForeignKey(Vendor, on_delete=models.CASCADE, null=True)
+    ceo_img = models.ImageField(upload_to='about/ceo/image', null=True)
+
+class VendorData(models.Model):
+    store_name = models.ForeignKey(Vendor, on_delete=models.CASCADE, null=True)
+    store_desc = models.TextField(null=True)
+    phone = models.CharField(max_length=250, null=True)
+    email = models.CharField(max_length=250, null=True)
+    images = models.ManyToManyField(VendorCeoImgs, blank=True)
+    social_net = models.ManyToManyField(Social, blank=True)
+    video_url = models.URLField(("video_url"), max_length=300)
+
+    def __str__(self):
+        return self.email
+    
