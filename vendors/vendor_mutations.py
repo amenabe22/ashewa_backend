@@ -149,7 +149,7 @@ class UpdateStoreData(graphene.Mutation):
         store_name = graphene.String()
 
     @permissions_checker([VendorsPermission])
-    def mutate(self, info, store_name, store_desc):
+    def mutate(self, info, store_name):
         try:
             vend = Vendor.objects.get(
                 user=info.context.user

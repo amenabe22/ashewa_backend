@@ -19,7 +19,8 @@ from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermis
 from core_marketing.models import (CoreLevelPlans, UnilevelNetwork, AffilatePlans, CoreVendorTestMpttNode,
                                    TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode, Marketingwallet, CoreMlmOrders)
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
-                          OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType, VendorDataType,VendorDataImageType)
+                          OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType, VendorDataType,
+                          VendorDataImageType, VendorDataSocialType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery, VendorData
 from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTyoe, CoreDocsType,
                                  CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType,)
@@ -124,6 +125,7 @@ class Query(graphene.ObjectType):
     )
     get_store_data = graphene.Field(VendorType)
     get_vendor_data_images = graphene.List(VendorDataImageType, store=graphene.String())
+    get_vendor_data_social_link = graphene.List(VendorDataSocialType, store=graphene.String())
 
     def resolve_get_vendor_data(self, info):
         vend = Vendor.objects.get(user=info.context.user)
@@ -135,6 +137,12 @@ class Query(graphene.ObjectType):
         vendData = VendorData.objects.get(store_name=store)
         # print(vendData.images.all(),"@@@@@@@@@@@")
         return vendData.images.all()
+
+    def resolve_get_vendor_data_social_link(self, info, store):
+        store = Vendor.objects.get(vendor_id=store)
+        vendData = VendorData.objects.get(store_name=store)
+        # print(vendData.images.all(),"@@@@@@@@@@@")
+        return vendData.social_net.all()
 
 
 

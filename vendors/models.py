@@ -104,6 +104,7 @@ class Social(models.Model):
     social_name = models.CharField(max_length=100)
     social_icon = models.CharField(max_length=100)
     icon_color = models.CharField(max_length=100, null=True)
+    social_link = models.URLField(('social_link'), max_length=300, null=True)
 
 class VendorCeoImgs(models.Model):
     ceo_img = models.ImageField(upload_to='about/ceo/image', null=True)
