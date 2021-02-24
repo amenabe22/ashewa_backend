@@ -6,30 +6,50 @@ from .admin_mutations import CreateMarketingPlans
 from core_ecommerce.types import (LandingCarsType, LandingCatBlockType, UsrOrderType,
                                   ProductImageType, ProductsType, ParentCategoryType,
                                   CategoryType, SubCatsType, ProductsPaginatedType)
-from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart, PopCart, UpdateStoreData, VendorDataAdd
+from vendors.vendor_mutations import (UpdateStoreCover, CreateOrder,
+                                      LoadCart, PopCart, UpdateStoreData,
+                                      VendorDataAdd, CreateVendor, createSocialLink,
+                                      createPromotions)
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
-from accounts.account_mutations import NewUserMutation, EditProfile, ChangePasswordMutation
+from accounts.account_mutations import (NewUserMutation, EditProfile,
+                                        ChangePasswordMutation)
 from accounts.types import CoreUsersType, UsersDataType
 from accounts.models import CustomUser, Affilate
 from core_ecommerce.models import(LandingCarousel,
-                                  Products, ProductImage, ParentCategory, Category, SubCategory)
-from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
-from core_marketing.models import (CoreLevelPlans, UnilevelNetwork, AffilatePlans, CoreVendorTestMpttNode,
-                                   TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode, Marketingwallet, CoreMlmOrders)
-from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
-                          OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType, VendorDataType,
-                          VendorDataImageType, VendorDataSocialType)
-from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery, VendorData
-from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTyoe, CoreDocsType,
-                                 CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType,)
-from core_ecommerce.product_mutations import(EditProduct,
-                                             NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
+                                  Products, ProductImage,
+                                  ParentCategory, Category, SubCategory)
+from .core_perimssions import (VendorsPermission,
+                               AdminPermission, AffilatePermission)
+from core_marketing.models import (CoreLevelPlans, UnilevelNetwork,
+                                   AffilatePlans, CoreVendorTestMpttNode,
+                                   TestNetwork, UserMessages, CoreDocs,
+                                   CoreTestMpttNode, Marketingwallet,
+                                   CoreMlmOrders)
+from vendors.types import(VendorType, VendorPlanType,
+                          VendorPlanPaginatedType, VendorOverviewDataType,
+                          OrdersType, OrdersPaginatedType, CartsType,
+                          CartPaginatedType, VenodrGalleryType, VendorDataType,
+                          VendorDataImageType, VendorDataSocialType, PromotionType)
+from vendors.models import (Vendor, VendorLevelPlans,
+                            Order, Cart, VenodrGallery, VendorData,
+                            Promotions)
+from core_marketing.types import(LinesDataType, CoreVendDataType,
+                                 UserMessagesTyoe, CoreDocsType,
+                                 CoreMarketingPlanTypes, SingleNetworkLayerType,
+                                 SingleNet, AffilatePlansType, CorePlanPaginatedType,)
+from core_ecommerce.product_mutations import(EditProduct, NewProductMutation,
+                                             CreateParentCategory, CreateCategory,
+                                             CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
 from core_marketing.marketing_mutations import (EmptyCart, CreateVendorPackageOrder,
-                                                AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage, EditVendorLevelPackage)
-from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
+                                                AddPlanMutation, CreateMlmLayer,
+                                                CreateTestLayer, CreateGenv2, CreateCoreMlmOrder,
+                                                CreateVendorPackage, EditVendorLevelPackage)
+from .utils import (recurs_iter, get_orders_paginator,
+                    get_core_paginator, get_net_tree,
+                    manage_data)
 from core.core_marketing_manager import MlmNetworkManager
 from django.forms.models import model_to_dict
 from django.db.models import Count
@@ -95,7 +115,7 @@ class Query(graphene.ObjectType):
     get_carts = graphene.Field(
         CartPaginatedType, page_size=graphene.Int(), page=graphene.Int())
     vendor_data = graphene.List(VendorOverviewDataType)
-    get_vendor_data =graphene.List(VendorDataType)
+    get_vendor_data = graphene.List(VendorDataType)
     parse_tree = graphene.String(net=graphene.String())
     core_vend_data = graphene.List(
         CoreVendDataType, year=graphene.Int(), month=graphene.Int())
@@ -124,8 +144,14 @@ class Query(graphene.ObjectType):
         usr=graphene.String(), ptype=graphene.String()
     )
     get_store_data = graphene.Field(VendorType)
-    get_vendor_data_images = graphene.List(VendorDataImageType, store=graphene.String())
-    get_vendor_data_social_link = graphene.List(VendorDataSocialType, store=graphene.String())
+    get_vendor_data_images = graphene.List(
+        VendorDataImageType, store=graphene.String())
+    get_vendor_data_social_link = graphene.List(
+    VendorDataSocialType, store=graphene.String())
+    # get_promotion_data = graphene.List(PromotionType, store=graphene.String())
+
+    # def resolve_get_promotion_data(self, info):
+    #     prom = Promotions.objects.get()
 
     def resolve_get_vendor_data(self, info):
         vend = Vendor.objects.get(user=info.context.user)
@@ -143,8 +169,6 @@ class Query(graphene.ObjectType):
         vendData = VendorData.objects.get(store_name=store)
         # print(vendData.images.all(),"@@@@@@@@@@@")
         return vendData.social_net.all()
-
-
 
     @permissions_checker([IsAuthenticated])
     def resolve_get_descendants(self, info, plan, current, usr, ptype):
@@ -695,6 +719,8 @@ class Mutations(graphene.ObjectType):
     update_store = UpdateStoreData.Field()
     update_password = ChangePasswordMutation.Field()
     create_vendor_data = VendorDataAdd.Field()
-
+    create_vendor = CreateVendor.Field()
+    create_social_link = createSocialLink.Field()
+    create_promotions = createPromotions.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

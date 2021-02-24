@@ -1,7 +1,7 @@
 import graphene
 from graphene_file_upload.scalars import Upload
 from vendors.models import Vendor, VendorLevelPlans
-from .models import VendorLevelPlans, Vendor, Order, Cart, VenodrGallery, VendorData
+from .models import VendorLevelPlans, Vendor, Order, Cart, VenodrGallery, VendorData, Social, Promotions
 from django_graphene_permissions import permissions_checker
 from ashewa_final.core_perimssions import VendorsPermission, AdminPermission
 from django_graphene_permissions.permissions import IsAuthenticated
@@ -184,3 +184,47 @@ class VendorDataAdd(graphene.Mutation):
 
         venData.save()
         return VendorDataAdd(payload=True)
+
+
+class CreateVendor(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        user = graphene.String()
+        store_name = graphene.String()
+
+    def mutate(self, info, user, store_name):
+        vend = Vendor.objects.create(
+            user=info.context.user, store_name=store_name)
+        vend.save()
+        return CreateVendor(payload=True)
+
+
+class createSocialLink(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        social_name = graphene.String()
+        social_icon = graphene.String()
+        icon_color = graphene.String()
+        social_link = graphene.String()
+
+    def mutate(self, info, social_name, social_icon, icon_color, social_link):
+        social = Social.objects.create(
+            social_name=social_name, social_icon=social_icon, icon_color=icon_color, social_link=social_link)
+        social.save()
+        return createSocialLink(payload=True)
+
+class createPromotions(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        image = Upload()
+        label = graphene.String()
+        size = graphene.String()
+
+    def mutate(self, info, image, label, size):
+        prom = Promotions.objects.create(image=image, label=label, size=size)
+        prom.save()
+
+        return createPromotions(payload=True)

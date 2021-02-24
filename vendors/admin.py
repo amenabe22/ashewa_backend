@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Vendor, VendorLevelPlans, Order, Cart,VenodrGallery, VendorData, Social, VendorCeoImgs
+from .models import Vendor, VendorLevelPlans, Order, Cart,VenodrGallery, VendorData, Social, VendorCeoImgs, Promotions
 
 
 class OrdersAdmin(admin.ModelAdmin):
@@ -15,3 +15,4 @@ admin.site.register(VenodrGallery)
 admin.site.register(VendorData)
 admin.site.register(Social)
 admin.site.register(VendorCeoImgs)
+admin.site.register(Promotions)

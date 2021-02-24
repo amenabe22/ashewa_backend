@@ -106,9 +106,20 @@ class Social(models.Model):
     icon_color = models.CharField(max_length=100, null=True)
     social_link = models.URLField(('social_link'), max_length=300, null=True)
 
+    def __str__(self):
+        return self.social_name
+
 class VendorCeoImgs(models.Model):
     ceo_img = models.ImageField(upload_to='about/ceo/image', null=True)
 
+class Promotions(models.Model):
+    image = models.ImageField(upload_to="promotions", null=True)
+    size = models.CharField(max_length=255)
+    label = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.label
+    
 class VendorData(models.Model):
     store_name = models.OneToOneField(Vendor, on_delete=models.CASCADE, null=True)
     store_desc = models.TextField(null=True)
@@ -117,7 +128,7 @@ class VendorData(models.Model):
     images = models.ManyToManyField(VendorCeoImgs, blank=True)
     social_net = models.ManyToManyField(Social, blank=True)
     video_url = models.URLField(("video_url"), max_length=300)
+    promotions = models.ManyToManyField(Promotions, blank=True)
 
     def __str__(self):
         return self.email
-    
