@@ -1,7 +1,9 @@
 import graphene
-from .types import CoreUsersType
-from .models import CustomUser, Affilate
+from .types import CoreUsersType, UserProfileType
+from .models import CustomUser, Affilate, UserProfile
+from graphene_file_upload.scalars import Upload
 from core_marketing.models import Marketingwallet, Ewallet
+from django_graphene_permissions.permissions import permissions_checker, IsAuthenticated
 
 
 class NewUserMutation(graphene.Mutation):
@@ -40,12 +42,16 @@ class EditProfile(graphene.Mutation):
         email = graphene.String()
         username = graphene.String()
         phone = graphene.String()
+
     def mutate(self, info, username,  full_name, email, phone):
         user = CustomUser.objects.filter(user_id=info.context.user.user_id)
         # user.set_password(password=password)
-        if not user.exists(): raise Exception("user not found")
-        user.update(username=username, phone=phone, full_name=full_name, email=email)
+        if not user.exists():
+            raise Exception("user not found")
+        user.update(username=username, phone=phone,
+                    full_name=full_name, email=email)
         return EditProfile(payload=user[0])
+
 
 class ChangePasswordMutation(graphene.Mutation):
     payload = graphene.Boolean()
@@ -59,3 +65,21 @@ class ChangePasswordMutation(graphene.Mutation):
         user.save()
 
         return ChangePasswordMutation(payload=True)
+
+
+class UpdateProfilePic(graphene.Mutation):
+    payload = graphene.Field(UserProfileType)
+
+    class Arguments:
+        pic = Upload()
+
+    @permissions_checker([IsAuthenticated])
+    def mutate(self, info, pic, upload):
+        profile = UserProfile.objects.filter(user=info.context.user)
+        if not profile.exists():
+            prof = UserProfile.objects.create(user=info.context.user)
+        else:
+            prof = profile[0]
+        prof.profile_pic = pic
+        prof.save()
+        return UpdateProfilePic(payload=prof)

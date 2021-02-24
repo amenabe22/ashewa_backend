@@ -1,6 +1,6 @@
 import graphene
 from graphene_django import DjangoObjectType
-from .models import CustomUser, Admin, Affilate
+from .models import CustomUser, Admin, Affilate, UserProfile
 from vendors.models import Vendor
 
 
@@ -29,6 +29,12 @@ class UsersDataType(DjangoObjectType):
             {'stat': is_admin, 'ptype': 'admin'},
             {'stat': is_affilate, 'ptype': 'affilate'}]
 
+
 class AffilateType(DjangoObjectType):
     class Meta:
         model = Affilate
+
+
+class UserProfileType(DjangoObjectType):
+    class Meta:
+        model = UserProfile

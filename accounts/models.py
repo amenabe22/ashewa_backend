@@ -67,7 +67,12 @@ class CoreLevelPlans(models.Model):
     creator = models.ForeignKey(Admin, on_delete=models.CASCADE, null=True)
     # optional multi level percentages
     plan_name = models.CharField(max_length=500, null=True)
-    joining_fee = models.FloatField(default=0.0, null=True)
+    joining_fee = models.FloatField(
+        default=0.0, null=True)
+    joining_pv = models.IntegerField(
+        default=0, null=True, blank=True, help_text="the joining credit award package")
+    has_purchase_bonus = models.BooleanField(default=False, null=True)
+    purchase_bonus = models.IntegerField(default=0, null=True)
     plan_image = models.ImageField(
         upload_to='plan/image/', null=True, blank=True)
     show_plan_form = models.BooleanField(default=False)
