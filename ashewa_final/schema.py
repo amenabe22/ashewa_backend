@@ -10,16 +10,16 @@ from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart, Po
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
-from accounts.account_mutations import NewUserMutation, EditProfile, ChangePasswordMutation,UpdateProfilePic
+from accounts.account_mutations import NewUserMutation, EditProfile, ChangePasswordMutation, UpdateProfilePic
 from accounts.types import CoreUsersType, UsersDataType, UserProfileType
-from accounts.models import CustomUser, Affilate,UserProfile
+from accounts.models import CustomUser, Affilate, UserProfile
 from core_ecommerce.models import(LandingCarousel,
                                   Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
 from core_marketing.models import (CoreLevelPlans, UnilevelNetwork, AffilatePlans, CoreVendorTestMpttNode,
                                    TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode, Marketingwallet, CoreMlmOrders)
 from vendors.types import(VendorType, VendorPlanType, VendorPlanPaginatedType, VendorOverviewDataType,
-                          OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType, VendorDataType,VendorDataImageType)
+                          OrdersType, OrdersPaginatedType, CartsType, CartPaginatedType, VenodrGalleryType, VendorDataType, VendorDataImageType)
 from vendors.models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery, VendorData
 from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTyoe, CoreDocsType,
                                  CoreMarketingPlanTypes, SingleNetworkLayerType, SingleNet, AffilatePlansType, CorePlanPaginatedType,)
@@ -94,7 +94,7 @@ class Query(graphene.ObjectType):
     get_carts = graphene.Field(
         CartPaginatedType, page_size=graphene.Int(), page=graphene.Int())
     vendor_data = graphene.List(VendorOverviewDataType)
-    get_vendor_data =graphene.List(VendorDataType)
+    get_vendor_data = graphene.List(VendorDataType)
     parse_tree = graphene.String(net=graphene.String())
     core_vend_data = graphene.List(
         CoreVendDataType, year=graphene.Int(), month=graphene.Int())
@@ -123,8 +123,13 @@ class Query(graphene.ObjectType):
         usr=graphene.String(), ptype=graphene.String()
     )
     get_store_data = graphene.Field(VendorType)
-    get_vendor_data_images = graphene.List(VendorDataImageType, store=graphene.String())
-    
+    get_vendor_data_images = graphene.List(
+        VendorDataImageType, store=graphene.String())
+    user_privillage_info = graphene.List(UsersDataType)
+
+    def resolve_user_privillage_info(self, info):
+        return CustomUser.objects.filter(user_id=info.context.user.user_id)
+
     def resolve_get_vendor_data(self, info):
         vend = Vendor.objects.get(user=info.context.user)
         vendData = VendorData.objects.filter(store_name=vend)
@@ -135,8 +140,6 @@ class Query(graphene.ObjectType):
         vendData = VendorData.objects.get(store_name=store)
         # print(vendData.images.all(),"@@@@@@@@@@@")
         return vendData.images.all()
-
-
 
     @permissions_checker([IsAuthenticated])
     def resolve_get_descendants(self, info, plan, current, usr, ptype):
@@ -583,7 +586,8 @@ class Query(graphene.ObjectType):
         profile = UserProfile.objects.filter(user=info.context.user)
         if not profile.exists():
             mp = UserProfile.objects.create(user=info.context.user)
-        else: mp = profile[0]
+        else:
+            mp = profile[0]
         return mp
 
     @ permissions_checker([AffilatePermission])
@@ -690,5 +694,6 @@ class Mutations(graphene.ObjectType):
     update_password = ChangePasswordMutation.Field()
     create_vendor_data = VendorDataAdd.Field()
     update_profile_pic = UpdateProfilePic.Field()
+
 
 schema = graphene.Schema(query=Query, mutation=Mutations)
