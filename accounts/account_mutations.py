@@ -74,7 +74,7 @@ class UpdateProfilePic(graphene.Mutation):
         pic = Upload()
 
     @permissions_checker([IsAuthenticated])
-    def mutate(self, info, pic, upload):
+    def mutate(self, info, pic):
         profile = UserProfile.objects.filter(user=info.context.user)
         if not profile.exists():
             prof = UserProfile.objects.create(user=info.context.user)

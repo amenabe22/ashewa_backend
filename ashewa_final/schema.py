@@ -11,8 +11,8 @@ from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
 from accounts.account_mutations import NewUserMutation, EditProfile, ChangePasswordMutation,UpdateProfilePic
-from accounts.types import CoreUsersType, UsersDataType
-from accounts.models import CustomUser, Affilate
+from accounts.types import CoreUsersType, UsersDataType, UserProfileType
+from accounts.models import CustomUser, Affilate,UserProfile
 from core_ecommerce.models import(LandingCarousel,
                                   Products, ProductImage, ParentCategory, Category, SubCategory)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
@@ -72,7 +72,7 @@ class Query(graphene.ObjectType):
     store_products = graphene.Field(
         ProductsPaginatedType, page=graphene.Int(), page_size=graphene.Int(), store=graphene.String())
 
-    user_data = graphene.List(UsersDataType)
+    user_data = graphene.Field(UserProfileType)
     see_gen = graphene.List(SingleNet,
                             #  SingleNetworkLayerType,
                             plan=graphene.String())
@@ -124,7 +124,7 @@ class Query(graphene.ObjectType):
     )
     get_store_data = graphene.Field(VendorType)
     get_vendor_data_images = graphene.List(VendorDataImageType, store=graphene.String())
-
+    
     def resolve_get_vendor_data(self, info):
         vend = Vendor.objects.get(user=info.context.user)
         vendData = VendorData.objects.filter(store_name=vend)
@@ -580,9 +580,11 @@ class Query(graphene.ObjectType):
 
     @ permissions_checker([IsAuthenticated])
     def resolve_user_data(self, info):
-        print(info.context.user)
-        return CustomUser.objects.filter(
-            user_id=info.context.user.user_id)
+        profile = UserProfile.objects.filter(user=info.context.user)
+        if not profile.exists():
+            mp = UserProfile.objects.create(user=info.context.user)
+        else: mp = profile[0]
+        return mp
 
     @ permissions_checker([AffilatePermission])
     def resolve_all_marketing_plans(self, info, page_size, page):
