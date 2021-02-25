@@ -1,8 +1,12 @@
 from django.contrib import admin
 from .models import(CoreLevelPlans, CoreBrand, Ewallet, UnilevelNetwork, UserMessages, Marketingwallet,
-                    Rewards, PayoutReport, DepositReport, AffilatePlans, TestNetwork, CoreDocs,
+                    Rewards, PayoutReport, DepositReport, AffilatePlans, TestNetwork, CoreDocs, CoreMarketingSetting,
                     CoreTestMpttNode, CoreMlmOrders, CoreVendorMlmOrders, BillingInfo, CoreVendorTestMpttNode)
 from accounts.models import Rank
+
+
+class CoreMarketingSettingAdmin(admin.ModelAdmin):
+    list_display = ('final', 'pv_rate_etb',)
 
 
 class LvlAdmin(admin.ModelAdmin):
@@ -35,6 +39,8 @@ class CoreMlmOrdersAdmin(admin.ModelAdmin):
     list_display = ('ordered_by', 'product',
                     'order_status', 'paid_already',)
     list_editable = ('order_status', )
+
+
     # list_editable = ('affilate',)
 admin.site.register(CoreLevelPlans)
 admin.site.register(CoreBrand)
@@ -55,3 +61,4 @@ admin.site.register(CoreVendorMlmOrders, CoreVendorMlmOrdersAdmin)
 admin.site.register(CoreMlmOrders, CoreMlmOrdersAdmin)
 admin.site.register(BillingInfo)
 admin.site.register(CoreVendorTestMpttNode, CoreVendorTestMpttNodeAdmin)
+admin.site.register(CoreMarketingSetting, CoreMarketingSettingAdmin)

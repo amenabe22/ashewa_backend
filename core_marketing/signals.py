@@ -5,6 +5,7 @@ from .core_manager import UniLevelMarketingNetworkManager
 from accounts.models import Affilate, CustomUser, CoreLevelPlans
 from .models import (UnilevelNetwork, AffilatePlans, CoreMlmOrders, CoreVendorTestMpttNode,
                      CoreTestMpttNode, Ewallet, Marketingwallet, CoreVendorMlmOrders)
+from core_marketing.models import CoreMarketingSetting
 
 
 @receiver(post_save, sender=CoreVendorMlmOrders)
@@ -86,8 +87,6 @@ def core_vendor_mlm_order_approval_handler(sender, instance, **kwargs):
                     marketing_plan=instance.product,
                     parent=None
                 )
-                print("NIBBAA")
-                # sponsor = None
 
             instance.paid_already = True
             instance.save()
@@ -143,6 +142,26 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                 allDown = []
                 [allDirect.append(x) for x in allDescendants if (x.level == 1)]
                 [allDown.append(x) for x in allDescendants if (x.level > 1)]
+                marketing_setting = CoreMarketingSetting.objects.filter(
+                    final=True)
+
+                if not marketing_setting.exists():
+                    # default incase of no data
+                    pv_etb_rate = 3
+                else:
+                    pv_etb_rate = marketing_setting[0].pv_rate_etb
+
+                userWallet = Marketingwallet.objects.get(
+                    user=instance.ordered_by)
+                affWallet = Ewallet.objects.get(
+                    user=usrs.user
+                )
+                purchase_bonus = instance.product.purchase_bonus
+                userWallet.amount += purchase_bonus
+                affWallet.amount += purchase_bonus
+                affWallet.save()
+                userWallet.save()
+
                 for usrs, x in zip(allAncestors, allLvl):
                     aff = Affilate.objects.get(user=usrs.user)
                     mWallet = Marketingwallet.objects.get(
@@ -155,14 +174,16 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                         'level{}_percentage'.format(x['lvl']+1)]
                     print(fare, "FAREEE", "{} GIVEN TO {} LEVEL->{}".format(fare,
                                                                             usrs.user, usrs.level+1))
-                    affWallet.amount += money.joining_fee * fare
+                    affWallet.amount += pv_etb_rate*(money.joining_pv * fare)
                     affWallet.save()
-                    mWallet.amount += money.joining_fee * fare
+                    mWallet.amount += pv_etb_rate*(money.joining_pv * fare)
+                    mWallet.pv_count += money.joining_pv
                     mWallet.save()
                     print(aff, "FARE = {}".format(fare),
-                          "AMT {}".format(money.joining_fee))
+                          "AMT {}".format(money.joining_pv))
                     aff.save_mplan_data(
                         len(allDirect), mWallet.amount, len(allDown), money)
+
                 CoreTestMpttNode.objects.create(
                     user=instance.ordered_by,
                     marketing_plan=instance.product,
@@ -208,7 +229,7 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
 
 # @receiver(post_save, sender=UnilevelNetwork)
 # def my_handler(sender, instance, **kwargs):
-#     join_fee = instance.marketing_plan.joining_fee
+#     join_fee = instance.marketing_plan.joining_pv
 #     net = UniLevelMarketingNetworkManager(
 #         planid=instance.marketing_plan.core_id, plan_type="core")
 #     affNet = AffilatePlans.objects.filter(
@@ -305,8 +326,8 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
 #                     if cut_amount > 0:  # check if the amount is greater than 0
 #                         # this is the amount per this level
 #                         print(usr[0].username, "====", "LEVEL {}".format(
-#                             i), "AMT ", cut_amount, " JOINING FEE ", instance.marketing_plan.joining_fee)
-#                     # join_fee = instance.marketing_plan.joining_fee
+#                             i), "AMT ", cut_amount, " JOINING FEE ", instance.marketing_plan.joining_pv)
+#                     # join_fee = instance.marketing_plan.joining_pv
 #                 else:
 #                     # level one for the downs go here
 #                     cut_lvl1_amount += join_fee * instance.marketing_plan.level1_percentage

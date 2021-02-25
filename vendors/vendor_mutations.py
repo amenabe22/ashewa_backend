@@ -49,7 +49,7 @@ class LoadCart(graphene.Mutation):
 
         return LoadCart(payload=True)
 
-
+# TODO: manage mlm conf
 class CreateOrder(graphene.Mutation):
     payload = graphene.Boolean()
 

@@ -6,6 +6,18 @@ from accounts.models import CustomUser, Admin, Affilate, CoreLevelPlans
 from mptt.models import MPTTModel, TreeForeignKey
 
 
+class CoreMarketingSetting(models.Model):
+    core_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    pv_rate_etb = models.BigIntegerField(
+        default=0, help_text="This is the pv exhange rate for ETB")
+    timestamp = models.DateTimeField(auto_now_add=True)
+    final = models.BooleanField(unique=True)
+
+    def __str__(self):
+        return str(self.core_id)
+
+
 class BillingInfo(models.Model):
     binfo_id = models.UUIDField(
         default=uuid4, editable=False, primary_key=True)
@@ -89,6 +101,8 @@ class Marketingwallet(models.Model):
         default=uuid4, editable=False, primary_key=True)
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     amount = models.BigIntegerField(default=0)
+    pv_count = models.BigIntegerField(default=0, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return "{} **{} ETB**".format(self.user.username, self.amount)
