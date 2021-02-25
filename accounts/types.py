@@ -38,3 +38,16 @@ class AffilateType(DjangoObjectType):
 class UserProfileType(DjangoObjectType):
     class Meta:
         model = UserProfile
+
+
+class DescUsersType(graphene.ObjectType):
+    user = graphene.Field(CoreUsersType)
+    profile = graphene.Field(UserProfileType)
+
+    @graphene.resolve_only_args
+    def resolve_user(self):
+        return self.user
+
+    @graphene.resolve_only_args
+    def resolve_profile(self):
+        return self.profile

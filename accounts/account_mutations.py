@@ -31,6 +31,7 @@ class NewUserMutation(graphene.Mutation):
         )
         Ewallet.objects.create(user=user)
         Affilate.objects.create(user=user)
+        UserProfile.objects.create(user=user)
         return NewUserMutation(payload=user)
 
 

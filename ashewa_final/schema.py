@@ -11,7 +11,7 @@ from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
 from accounts.account_mutations import NewUserMutation, EditProfile, ChangePasswordMutation, UpdateProfilePic
-from accounts.types import CoreUsersType, UsersDataType, UserProfileType
+from accounts.types import CoreUsersType, UsersDataType, UserProfileType, DescUsersType
 from accounts.models import CustomUser, Affilate, UserProfile
 from core_ecommerce.models import(LandingCarousel,
                                   Products, ProductImage, ParentCategory, Category, SubCategory)
@@ -178,7 +178,6 @@ class Query(graphene.ObjectType):
                 user=user, marketing_plan=plan)
             if not tree.exists():
                 raise Exception("Activity not found !")
-            print(tree, ptype)
         return allUsrs
 
     @permissions_checker([IsAuthenticated])
