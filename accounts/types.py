@@ -1,9 +1,14 @@
 import graphene
 from graphene_django import DjangoObjectType
-from .models import CustomUser, Admin, Affilate, UserProfile
+from .models import CustomUser, Admin, Affilate, UserProfile, Rank
 from vendors.models import Vendor
 from django.core.cache import cache
 from uuid import uuid4
+
+
+class RanksType(DjangoObjectType):
+    class Meta:
+        model = Rank
 
 
 class CoreUsersType(DjangoObjectType):
@@ -27,18 +32,18 @@ class UsersDataType(DjangoObjectType):
         is_admin = Admin.objects.filter(user=info.context.user).exists()
         is_affilate = Affilate.objects.filter(user=info.context.user)
         # init caching
-        # setup request specific cache key 
+        # setup request specific cache key
         cache_key = str(info.context.user.user_id)
-        # parse cache 
+        # parse cache
         stats = cache.get(cache_key)
-        # pull data from cache if it's available 
+        # pull data from cache if it's available
         if stats is not None:
             return stats
         stats = [
             {'stat': is_vendor, 'ptype': 'vendor'},
             {'stat': is_admin, 'ptype': 'admin'},
             {'stat': is_affilate, 'ptype': 'affilate'}]
-        # store in cache if not available 
+        # store in cache if not available
         cache.set(cache_key, stats, 30)
 
         return stats

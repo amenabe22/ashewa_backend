@@ -1,7 +1,7 @@
 from uuid import uuid4
 from django.db import models
 from vendors.models import Vendor, VendorLevelPlans
-from accounts.models import CustomUser, Admin, Affilate, CoreLevelPlans
+from accounts.models import CustomUser, Admin, Affilate, CoreLevelPlans, Rank
 # from .core_manager import UniLevelMarketingNetworkManager
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -160,19 +160,20 @@ class Rewards(models.Model):
     ]
     reward_id = models.UUIDField(
         default=uuid4, editable=False, primary_key=True)
-    plan = models.ForeignKey(CoreLevelPlans, on_delete=models.CASCADE)
+    # plan = models.ForeignKey(CoreLevelPlans, on_delete=models.CASCADE)
     reward_name = models.CharField(max_length=700)
-    reward_based_on = models.CharField(max_length=6, choices=reward_opts)
+    # reward_based_on = models.CharField(max_length=6, choices=reward_opts)
     count_based_on = models.CharField(max_length=6, choices=cnt_basedon)
-    duration = models.BigIntegerField(default=0)
-    downline_value = models.BigIntegerField(null=True, blank=True)
-    direct_referrals = models.BigIntegerField(null=True, blank=True)
-    level_no = models.IntegerField(null=True, blank=True)
-    total_member_on_level = models.BigIntegerField(null=True, blank=True)
+    # duration = models.BigIntegerField(default=0)
+    # downline_value = models.BigIntegerField(null=True, blank=True)
+    # direct_referrals = models.BigIntegerField(null=True, blank=True)
+    # level_no = models.IntegerField(null=True, blank=True)
+    # total_member_on_level = models.BigIntegerField(null=True, blank=True)
+    rank = models.OneToOneField(Rank, on_delete=models.CASCADE, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.reward_id)
+        return self.reward_name
 
 
 class PayoutReport(models.Model):
@@ -428,3 +429,18 @@ class CoreVendorTestMpttNode(MPTTModel):
         print("CUR PARENT => {}".format(self.parent.user))
         print("CUR USR => {}".format(self.user))
         print("I will pay every one what they deserve")
+
+# TODO: create rewards report and use to store rewards unique data here
+
+
+class RewardsReport(models.Model):
+    statuses = [('rew', 'Rewarded'), ('pen', 'Pending'), ('can', 'Cancelled')]
+    report_id = models.UUIDField(
+        default=uuid4, unique=True, primary_key=True, editable=False)
+    affilate = models.ForeignKey(Affilate, on_delete=models.CASCADE)
+    reward = models.ForeignKey(Rewards, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=5, choices=statuses, default='pen')
+
+    def __str__(self):
+        return str(self.report_id)

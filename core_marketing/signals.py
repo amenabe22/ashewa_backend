@@ -2,10 +2,18 @@ from pprint import pprint
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .core_manager import UniLevelMarketingNetworkManager
-from accounts.models import Affilate, CustomUser, CoreLevelPlans
+from accounts.models import Affilate, CustomUser, CoreLevelPlans, Rank
 from .models import (UnilevelNetwork, AffilatePlans, CoreMlmOrders, CoreVendorTestMpttNode,
-                     CoreTestMpttNode, Ewallet, Marketingwallet, CoreVendorMlmOrders)
+                     CoreTestMpttNode, Ewallet, Marketingwallet, CoreVendorMlmOrders, Rewards, RewardsReport)
 from core_marketing.models import CoreMarketingSetting
+from django.core.mail import send_mail
+from django.conf import settings
+
+
+def core_mail_sender(subject, message, recipient_list):
+    email_from = settings.EMAIL_HOST_USER
+    send_mail(subject, message, email_from, recipient_list)
+    print("EMAIL SENT")
 
 
 @receiver(post_save, sender=CoreVendorMlmOrders)
@@ -94,6 +102,42 @@ def core_vendor_mlm_order_approval_handler(sender, instance, **kwargs):
             print("#"*20)
 
 
+def reward_ranks(ancestors):
+    for anc in ancestors:
+        mWallet = Marketingwallet.objects.get(
+            user=anc.user
+        )
+        elligiableRanksQset = Rank.objects.filter(
+            count_based_on='pvval'
+        )
+        affilate = Affilate.objects.get(user=anc.user)
+        for elRank in elligiableRanksQset:
+            print("RANK {}", format(elRank.rank_name))
+            if (elRank.total_pv_count_start <= mWallet.pv_count <= elRank.total_pv_count_end):
+                print("USER IS ELLIGIABLE FOR {} RANK".format(elRank.rank_name))
+                affilate.affilate_rank = elRank
+                affilate.save()
+        reward = Rewards.objects.filter(rank=affilate.affilate_rank)
+        if reward.exists():
+
+            if not RewardsReport.objects.filter(affilate=affilate, reward=reward[0]).exists():
+                reward_report = RewardsReport.objects.create(
+                    affilate=affilate, reward=reward[0]
+                )
+                print("REWARD {} GIVEN TO {}".format(
+                    reward_report.reward.reward_name, affilate.user.email))
+                emailMessage = """<h2>Congratulations !!!!</h2> \nYou have achieved the Ashewa {} Reward.\nYou can contact us at {} and we will be intouch with you with details of your reward. \n Thanks For working with Ashewa !!!""".format(
+                    reward[0].reward_name, "0911928233"
+                )
+                emailSubject = "Ashewa Reward Achievement"
+                core_mail_sender(emailSubject, emailMessage,
+                                 [affilate.user.email])
+            else:
+                print("Affilate has already taken the reward")
+            # give out reward here
+            # give out rewards
+
+
 @receiver(post_save, sender=CoreMlmOrders)
 def core_mlm_order_approval_handler(sender, instance, **kwargs):
     if not instance.paid_already:
@@ -140,6 +184,7 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                 allDescendants = sponsor.get_descendants()
                 allDirect = []
                 allDown = []
+                # allRanks = []
                 [allDirect.append(x) for x in allDescendants if (x.level == 1)]
                 [allDown.append(x) for x in allDescendants if (x.level > 1)]
                 marketing_setting = CoreMarketingSetting.objects.filter(
@@ -151,18 +196,37 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                 else:
                     pv_etb_rate = marketing_setting[0].pv_rate_etb
 
-                userWallet = Marketingwallet.objects.get(
-                    user=instance.ordered_by)
-                affWallet = Ewallet.objects.get(
-                    user=usrs.user
-                )
-                purchase_bonus = instance.product.purchase_bonus
-                userWallet.amount += purchase_bonus
-                affWallet.amount += purchase_bonus
-                affWallet.save()
-                userWallet.save()
-
+                # reward bonus for this specific user
+                if instance.product.has_purchase_bonus:
+                    userWallet = Marketingwallet.objects.get(
+                        user=instance.ordered_by)
+                    affWallet = Ewallet.objects.get(
+                        user=instance.ordered_by
+                    )
+                    purchase_bonus = instance.product.purchase_bonus
+                    userWallet.amount += pv_etb_rate*purchase_bonus
+                    userWallet.pv_count = purchase_bonus
+                    affWallet.amount += pv_etb_rate*purchase_bonus
+                    affWallet.save()
+                    userWallet.save()
+                # save all ranks
+                # [allRanks.append(rank) for rank in Rank.objects.all()]
+                # print(allAncestors, 'ALL ANCESTORS')
+                # for ancestor in allAncestors:
+                #     print(ancestor.user, "ANCES")
+                # for usrs, ranks in zip(allAncestors, allRanks):
+                #     # the current affilate
+                #     aff = Affilate.objects.get(user=usrs.user)
+                #     mWallet = Marketingwallet.objects.get(
+                #         user=usrs.user
+                #     )
+                #     usr_pv = mWallet.pv_count
+                #     print("RANKS {}".format(ranks))
+                #     print("USERS PV => {}".format(usr_pv))
+                #     if (ranks.count_based_on == 'pvval' and usr_pv == ranks.total_pv_count):
+                #         print("user is ELLIGIABLE FOR RANK")
                 for usrs, x in zip(allAncestors, allLvl):
+                    # award pv for all the ancestors above the current user
                     aff = Affilate.objects.get(user=usrs.user)
                     mWallet = Marketingwallet.objects.get(
                         user=usrs.user
@@ -183,6 +247,10 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                           "AMT {}".format(money.joining_pv))
                     aff.save_mplan_data(
                         len(allDirect), mWallet.amount, len(allDown), money)
+                    # grant ranks for those who deserve it
+                    print("USER => {} & PV => {}".format(
+                        usrs.user, mWallet.pv_count))
+                reward_ranks(allAncestors)
 
                 CoreTestMpttNode.objects.create(
                     user=instance.ordered_by,
@@ -200,139 +268,3 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
 
             instance.paid_already = True
             instance.save()
-
-            print("#"*20)
-
-
-# @receiver(post_save, sender=Marketingwallet)
-# def mwallet_handler(sender, instance, **kwargs):
-#     aff = Affilate.objects.get(user=instance.user)
-#     sponsors_aff_plan = AffilatePlans.objects.get(
-#         affilate=aff, core_plan=money, plan_type='core')
-#     sponsors_aff_plan.total_direct_referrals = len(allDirect)
-#     sponsors_aff_plan.total_earned = mWallet.amount
-#     sponsors_aff_plan.total_downline = len(allDown)
-#     sponsors_aff_plan.save()
-#     pass
-
-# do it on the wallet trigger
-#     aff = Affilate.objects.get(user=usrs.user)
-#     sponsors_aff_plan = AffilatePlans.objects.get(
-#         affilate=aff, core_plan=money, plan_type='core')
-#     # sponsors_aff_plan.total_direct_referrals = len(allDirect)
-#     # sponsors_aff_plan.total_earned = mWallet.amount
-#     # sponsors_aff_plan.total_downline = len(allDown)
-#     # sponsors_aff_plan.save()
-
-# Core MLM orders
-
-
-# @receiver(post_save, sender=UnilevelNetwork)
-# def my_handler(sender, instance, **kwargs):
-#     join_fee = instance.marketing_plan.joining_pv
-#     net = UniLevelMarketingNetworkManager(
-#         planid=instance.marketing_plan.core_id, plan_type="core")
-#     affNet = AffilatePlans.objects.filter(
-#         affilate=instance.affilate, core_plan=instance.marketing_plan)
-
-#     firstLevels = net.get_net_by_lvl(net.parse_nets(instance.affilate.user), 1)
-#     # print(firstLevels, "AGAIN")
-#     allLvl1 = []
-#     totalDowns = 0
-#     # print(self.marketing_plan, self.affilate.user, "TEST")
-#     totalDownUsrs = []
-#     total_lvl1_income = 0
-#     total_downline_income_main = 0
-#     for j in range(instance.marketing_plan.count):
-#         i = j+1
-#         # if i > 1:
-#         allLens = net.get_net_by_lvl(
-#             net.parse_nets(instance.affilate.user), i)
-#         # print(len(allLens) > 0, i, "DIDE")
-#         # print(instance.affilate.user, "PLEASE")
-#         print(allLens, "()"*10, "==>", i)
-#         if (len(allLens) > 0) and i > 1:
-#             # print(allLens, "BRO", i)
-#             [totalDownUsrs.append(x['user']) for x in allLens]
-#             # print("#"*20)
-#             # print(allLens)
-#             # # print()
-#             # # print(len(allLens), "@@@", allLens, "==> % d" % i)
-#             # print()
-#             totalDowns += len(allLens)
-#             cut_amount_main = instance.marketing_plan.__dict__[
-#                 'level{}_percentage'.format(i)]
-#             if cut_amount_main > 0:  # check if the amount is greater than 0
-#                 # this is the amount per this level
-#                 print(instance.affilate.user.username, "====", "LEVEL {}".format(
-#                     i), "AMT ", cut_amount_main, " JOINING FEE ", join_fee)
-
-#                 # print("CORE LVL 1", cut_lvl1_amount_main)
-#                 total_downline_income_main += join_fee * cut_amount_main
-#                 # print(total_downline_income_main, "GROWWW")
-#         else:
-#             for po in allLens:
-#                 total_lvl1_income += join_fee * instance.marketing_plan.level1_percentage
-
-#             # if len(allLens) > 0:
-#             #     print(, "REALLY")
-#             #     print("this is level one")
-#             # total_lvl1_income += join_fee * instance.marketing_plan.level1_percentage
-#             # allLvl1.append(total_lvl1_income)
-#             # print(i)
-#             # print("CORE Downline", total_downline_income_main)
-#         # else: print(len(allLens),"DOOO")
-#         # # DO LEVEL ONE
-#         # else:
-#         #     total_lvl1_income += join_fee * instance.marketing_plan.level1_percentage
-#         #     pass
-#     # cut_lvl1_amount_main = join_fee * instance.marketing_plan.level1_percentage
-#     print(allLvl1, "!@!!")
-#     total_earned_main = total_lvl1_income + total_downline_income_main
-#     print(totalDowns, "Total Downlines")
-#     affNet.update(total_direct_referrals=len(
-#         firstLevels), total_downline=totalDowns, total_earned=total_earned_main)
-
-#     print(totalDownUsrs, "NIGGGA")
-#     for aff in totalDownUsrs:
-#         usr = CustomUser.objects.filter(username=aff)
-#         aff = Affilate.objects.filter(user=usr[0])
-#         # print(CustomUser.objects.filter(
-#         #             username=aff
-#         #         ).exists(),"@"*200)
-#         if aff.exists():
-#             allAffNets = AffilatePlans.objects.filter(
-#                 affilate=Affilate.objects.get(
-#                     user=usr[0]
-#                 )
-#             )
-#             allFirstLevels = net.get_net_by_lvl(
-#                 net.parse_nets(usr[0]), 1)
-#             print(allFirstLevels, "!!!!!"*20)
-#             alltotalDownUsrs = 0
-#             cut_lvl1_amount = 0
-#             for i in range(instance.marketing_plan.count):
-#                 # i = j+1
-
-#                 allLens = net.get_net_by_lvl(
-#                     net.parse_nets(usr[0]), i)
-#                 # if len(allLens) > 0 and (i > 1):
-#                 if i > 1:
-
-#                     alltotalDownUsrs += len(allLens)
-#                     # cur amount is the amount they get per that level
-#                     cut_amount = instance.marketing_plan.__dict__[
-#                         'level{}_percentage'.format(i)]
-#                     if cut_amount > 0:  # check if the amount is greater than 0
-#                         # this is the amount per this level
-#                         print(usr[0].username, "====", "LEVEL {}".format(
-#                             i), "AMT ", cut_amount, " JOINING FEE ", instance.marketing_plan.joining_pv)
-#                     # join_fee = instance.marketing_plan.joining_pv
-#                 else:
-#                     # level one for the downs go here
-#                     cut_lvl1_amount += join_fee * instance.marketing_plan.level1_percentage
-#             print(total_lvl1_income, "DOWNS")
-#             total_downline_income = join_fee * cut_amount
-#             total_earned = cut_lvl1_amount + total_downline_income
-#             allAffNets.update(total_direct_referrals=len(
-#                 allFirstLevels), total_downline=alltotalDownUsrs, total_earned=int(total_earned))

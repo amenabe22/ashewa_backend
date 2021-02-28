@@ -63,10 +63,11 @@ class CustomUserAdmin(UserAdmin):
     # The fields to be used in displaying the User model.
     # These override the definitions on the base UserAdmin
     # that reference specific fields on auth.User.
-    list_display = ('email', 'username','full_name', 'is_staff',)
+    list_display = ('email', 'username', 'full_name', 'is_staff',)
     # list_filter = ('is_admin',)
     fieldsets = (
-        (None, {'fields': ('email',  'username','full_name', 'is_staff','password')}),
+        (None, {'fields': ('email',  'username',
+                           'full_name', 'is_staff', 'password')}),
         # ('Personal info', {'fields': ('date_of_birth',)}),
         ('Permissions', {'fields': ('is_superuser',)}),
         ('Important dates', {'fields': ('last_login',)}),
@@ -74,12 +75,16 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email','full_name', 'password1', 'password2')}
+            'fields': ('email', 'full_name', 'password1', 'password2')}
          ),
     )
-    search_fields = ('email','full_name',)
-    ordering = ('email','full_name',)
+    search_fields = ('email', 'full_name',)
+    ordering = ('email', 'full_name',)
     filter_horizontal = ()
+
+
+class AffilateAdmin(admin.ModelAdmin):
+    list_display = ('user', 'affilate_rank',)
 
 
 # Now register the new UserAdmin...
@@ -88,6 +93,6 @@ admin.site.register(CustomUser, CustomUserAdmin)
 # unregister the Group model from admin.
 admin.site.unregister(Group)
 admin.site.register(UserProfile)
-admin.site.register(Affilate)
+admin.site.register(Affilate, AffilateAdmin)
 admin.site.register(Admin)
 admin.site.register(StaffPrivillage)

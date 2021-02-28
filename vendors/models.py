@@ -92,6 +92,7 @@ class Order(models.Model):
         to='core_ecommerce.Products', on_delete=models.CASCADE, blank=True, null=True)
     # product = models.ForeignKey(
     #     to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
+    reference_no = models.CharField(max_length=300, null=True)
     timestamp = models.DateTimeField(
         auto_now_add=True, editable=True, null=True)
     order_status = models.CharField(

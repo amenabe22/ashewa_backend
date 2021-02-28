@@ -109,19 +109,24 @@ class Rank(models.Model):
         ('memcnt', 'Members Count')
     ]
     rank_id = models.UUIDField(default=uuid4, primary_key=True, editable=False)
-    plan = models.ForeignKey(CoreLevelPlans, on_delete=models.CASCADE)
     rank_name = models.CharField(max_length=500)
-    based_on = models.CharField(max_length=5, choices=rank_opts)
+    # based_on = models.CharField(max_length=5, choices=rank_opts)
     count_based_on = models.CharField(max_length=6, choices=cnt_basedon)
-    duration = models.BigIntegerField(default=0, null=True, blank=True)
-    downline_value = models.BigIntegerField(null=True, blank=True)
-    direct_referrals = models.BigIntegerField(null=True, blank=True)
-    level_no = models.IntegerField(null=True, blank=True)
-    total_member_on_level = models.BigIntegerField(null=True, blank=True)
+    # duration = models.BigIntegerField(default=0, null=True, blank=True)
+    # downline_value = models.BigIntegerField(null=True, blank=True)
+    # direct_referrals = models.BigIntegerField(null=True, blank=True)
+    # total pv count ranged input
+    total_pv_count_start = models.BigIntegerField(
+        null=True, default=0, blank=True)
+    total_pv_count_end = models.BigIntegerField(
+        null=True, default=0, blank=True)
+    # notice that above
+    # level_no = models.IntegerField(null=True, blank=True)
+    # total_member_on_level = models.BigIntegerField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.rank_name+" RANK"
+        return self.rank_name
 
 
 class Affilate(models.Model):
