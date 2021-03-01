@@ -106,7 +106,7 @@ class Query(graphene.ObjectType):
     ), page=graphene.Int(), page_size=graphene.Int(), ranged=graphene.Boolean(), minP=graphene.Int(), maxP=graphene.Int())
     # please delete me
     get_core_docs = graphene.List(CoreDocsType)
-    test_me = graphene.String()
+    affilate_overview = graphene.JSONString()
     get_genv2 = graphene.JSONString(plan=graphene.String())
     get_vendor_plan_genv2 = graphene.JSONString(plan=graphene.String())
     user_orders = graphene.List(UsrOrderType)
@@ -127,6 +127,25 @@ class Query(graphene.ObjectType):
         VendorDataImageType, store=graphene.String())
     user_privillage_info = graphene.List(UsersDataType)
     get_payment_methods = graphene.List(PaymentTypeAdmin)
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_affilate_overview(self, info):
+        wallet = Marketingwallet.objects.get(user=info.context.user)
+        affilate = Affilate.objects.get(user=info.context.user)
+        affilatePlans = AffilatePlans.objects.filter(affilate=affilate)
+        packagesData = {'allDirect': [], 'allDown': []}
+        for plans in affilatePlans:
+            packagesData['allDirect'].append(plans.total_direct_referrals)
+            packagesData['allDown'].append(plans.total_downline)
+        
+        payload = {
+            'total_amount': wallet.amount,
+            'total_pv': wallet.pv_count,
+            'allDirect': len(packagesData['allDirect']),
+            'allDown': len(packagesData['allDown']),
+            'affilateRank': affilate.affilate_rank.rank_name
+        }
+        return payload
 
     def resolve_get_payment_methods(self, info):
         return PaymentType.objects.all()
@@ -236,29 +255,11 @@ class Query(graphene.ObjectType):
         aff = AffilatePlans.objects.get(plan_id=plan)
         rank = "No Rank"
         if aff.affilate.affilate_rank:
-            print("SSSSSS")
             rank = aff.affilate.affilate_rank.rank_name
-        finData = {'total_earned': aff.total_earned, 'total_downlines': aff.total_downline,
+            print(aff.__dict__,"!!!!!!!1111!")
+        finData = {'total_earned': aff.total_earned, 'total_downlines': aff.total_downline,'total_pv':aff.total_earned_pv,
                    'total_direct': aff.total_direct_referrals, 'plan_name': aff.core_plan.plan_name, 'affilate_rank': rank}
         return finData
-
-    def resolve_test_me(self, info):
-        # first = CoreTestMpttNode.objects._mptt_filter(
-        #     user=info.context.user)
-        # get ancestors of this specific user
-        # print(first.get_ancestors(include_self=True))
-        # usrs = []
-        # for x in first.get_descendants(): usrs.append(x.user)
-        # print(usrs)
-        # rln = CoreTestMpttNode.objects._mptt_filter(level__lte=1)
-        # [print(x.user, x.level) for x in rln]
-        print(CoreTestMpttNode.objects.get(marketing_plan=CoreLevelPlans(core_id="eb1b5ee2-f45b-4723-b595-4ef12176671f"),
-                                           user=CustomUser.objects.get(username=info.context.user)).level)
-        # [print(x.level) for x in CoreTestMpttNode.objects.all()]
-        # level__lte
-        # print(first.get_ancestors(include_self=True))
-        # print(CoreTestMpttNode.objects.tree_model())
-        return "Hey there"
 
     def resolve_get_core_docs(self, info):
         return CoreDocs.objects.all()
