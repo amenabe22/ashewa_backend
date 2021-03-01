@@ -83,3 +83,15 @@ class LandingCarousel(models.Model):
 
     def __str__(self):
         return str(self.car_id)
+
+
+class PaymentType(models.Model):
+    types = [('cash', 'Cash'), ('bank', 'Bank Payment')]
+    type_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True)
+    type_name = models.CharField(max_length=300)
+    core_transaction_outlet = models.CharField(max_length=4, choices=types, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.type_name

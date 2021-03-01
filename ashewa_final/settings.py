@@ -40,6 +40,7 @@ INSTALLED_APPS += [
 ]
 # 3rd party apps
 INSTALLED_APPS += [
+    # 'jet_django',
     'graphene_django',
     'corsheaders',
     'mptt',

@@ -1,6 +1,6 @@
 import graphene
 from graphene_django import DjangoObjectType
-from .models import(ProductImage, Products, ParentCategory,
+from .models import(ProductImage, Products, ParentCategory, PaymentType,
                     Category, SubCategory, LandingCarousel, ParentCategory)
 
 from vendors.types import OrdersType
@@ -60,3 +60,8 @@ class LandingCatBlockType(graphene.ObjectType):
 class UsrOrderType(graphene.ObjectType):
     core_ord = graphene.List(CoreMlmOrderType)
     ords = graphene.List(OrdersType)
+
+
+class PaymentTypeAdmin(DjangoObjectType):
+    class Meta:
+        model = PaymentType

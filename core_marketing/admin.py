@@ -32,14 +32,14 @@ class UserMessagesAdmin(admin.ModelAdmin):
 
 class CoreVendorMlmOrdersAdmin(admin.ModelAdmin):
     list_display = ('ordered_by', 'product',
-                    'order_status', 'paid_already',)
+                    'order_status', 'payment_type', 'reference_no', 'paid_already',)
 
 
 class CoreMlmOrdersAdmin(admin.ModelAdmin):
     list_display = ('ordered_by', 'product',
-                    'order_status', 'paid_already',)
+                    'order_status', 'payment_type', 'reference_no', 'paid_already','timestamp',)
     list_editable = ('order_status', )
-
+    search_fields =['ordered_by__username',]
     # list_editable = ('affilate',)
 
 
@@ -56,6 +56,7 @@ class AffilatePlansAdmin(admin.ModelAdmin):
 
 class RewardsReportAdmin(admin.ModelAdmin):
     list_display = ('reward', 'affilate', 'timestamp',)
+
 
 admin.site.register(CoreLevelPlans)
 admin.site.register(CoreBrand)

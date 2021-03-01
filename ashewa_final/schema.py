@@ -5,7 +5,7 @@ from pprint import pprint
 from .admin_mutations import CreateMarketingPlans
 from core_ecommerce.types import (LandingCarsType, LandingCatBlockType, UsrOrderType,
                                   ProductImageType, ProductsType, ParentCategoryType,
-                                  CategoryType, SubCatsType, ProductsPaginatedType)
+                                  CategoryType, SubCatsType, ProductsPaginatedType, PaymentTypeAdmin)
 from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart, PopCart, UpdateStoreData, VendorDataAdd
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
@@ -14,7 +14,7 @@ from accounts.account_mutations import NewUserMutation, EditProfile, ChangePassw
 from accounts.types import CoreUsersType, UsersDataType, UserProfileType, DescUsersType
 from accounts.models import CustomUser, Affilate, UserProfile
 from core_ecommerce.models import(LandingCarousel,
-                                  Products, ProductImage, ParentCategory, Category, SubCategory)
+                                  Products, ProductImage, ParentCategory, Category, SubCategory, PaymentType)
 from .core_perimssions import VendorsPermission, AdminPermission, AffilatePermission
 from core_marketing.models import (CoreLevelPlans, UnilevelNetwork, AffilatePlans, CoreVendorTestMpttNode,
                                    TestNetwork, UserMessages, CoreDocs, CoreTestMpttNode, Marketingwallet, CoreMlmOrders)
@@ -33,7 +33,7 @@ from core.core_marketing_manager import MlmNetworkManager
 from django.forms.models import model_to_dict
 from django.db.models import Count
 from django.db.models.functions import ExtractDay
-
+from core_marketing.utils import get_pv_rate
 # rushed to doing this
 
 
@@ -126,6 +126,10 @@ class Query(graphene.ObjectType):
     get_vendor_data_images = graphene.List(
         VendorDataImageType, store=graphene.String())
     user_privillage_info = graphene.List(UsersDataType)
+    get_payment_methods = graphene.List(PaymentTypeAdmin)
+
+    def resolve_get_payment_methods(self, info):
+        return PaymentType.objects.all()
 
     def resolve_user_privillage_info(self, info):
         return CustomUser.objects.filter(user_id=info.context.user.user_id)
@@ -230,60 +234,12 @@ class Query(graphene.ObjectType):
     @permissions_checker([IsAuthenticated])
     def resolve_get_genv2(self, info, plan):
         aff = AffilatePlans.objects.get(plan_id=plan)
-        # core_plan = CoreLevelPlans(core_id=plan)
-        core_plan = aff.core_plan
-        print("DEBUG", core_plan)
-        current_mptt = CoreTestMpttNode.objects.get(
-            user=info.context.user, marketing_plan=core_plan)
-        print(core_plan, "PLAN")
-        # userMptt = CoreTestMpttNode.objects.get(marketing_plan=core_plan,
-        #                                         user=info.context.user)
-        # allAncestors = userMptt.get_ancestors()
-        allDownline = current_mptt.get_descendants()
-        allDown = []
-        allDirect = []
-        for des in allDownline:
-            if(des.parent == current_mptt):
-                allDirect.append(des)
-            else:
-                print("@@"*20)
-                allDown.append(des)
-                print(des)
-                print(des.parent == current_mptt)
-                print("@@"*20)
-        # print("DEBUG")
-        mWallet = Marketingwallet.objects.get(user=info.context.user).amount
-        # [allDown.append(x) for x in allDownline if (x.level > 1)]
-        # [allDirect.append(x) for x in allDownline if (x.level == 1)]
-        # for x in allDownline:
-        #     print(x.user, x.level, x.marketing_plan)
-        # print(allDirect, "ALLDRI")
-        # TODO: Start from where you left off
-        # qset = CoreTestMpttNode.objects.filter(
-        #     user=info.context.user, marketing_plan=core_plan
-        # ).filter(timestamp__year=year,
-        #          timestamp__month=month
-        #          ).annotate(
-        #     day=ExtractDay('timestamp'),
-        # ).values(
-        #     'day'
-        # ).annotate(
-        #     n=Count('pk')
-        # ).order_by('day')
-        # print(qset, "QSET IS HERe")
-        #  tq = totalSold.filter(timestamp__year=year,
-        #                       timestamp__month=month
-        #                       ).annotate(
-        #     day=ExtractDay('timestamp'),
-        # ).values(
-        #     'day'
-        # ).annotate(
-        #     n=Count('pk')
-        # ).order_by('day')
-        finData = {'total_earned': mWallet, 'total_downlines': len(
-            allDown), 'total_direct': len(allDirect), 'plan_name': core_plan.plan_name}
-        # print("ALL DLINE {}".format(len(allDown)))
-        # print("DEBUG")
+        rank = "No Rank"
+        if aff.affilate.affilate_rank:
+            print("SSSSSS")
+            rank = aff.affilate.affilate_rank.rank_name
+        finData = {'total_earned': aff.total_earned, 'total_downlines': aff.total_downline,
+                   'total_direct': aff.total_direct_referrals, 'plan_name': aff.core_plan.plan_name, 'affilate_rank': rank}
         return finData
 
     def resolve_test_me(self, info):
@@ -341,7 +297,7 @@ class Query(graphene.ObjectType):
         if not(allPcats.count() > 0):
             raise Exception("not pcats registered")
         if count > allPcats.count():
-            all_pcats = allPcats[:count]
+            all_pcats = allPcats[: count]
         else:
             all_pcats = allPcats.order_by(
                 '-created_timestamp')[:count]

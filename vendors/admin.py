@@ -1,9 +1,10 @@
 from django.contrib import admin
-from .models import Vendor, VendorLevelPlans, Order, Cart,VenodrGallery, VendorData, Social, VendorCeoImgs, Promotions
+from .models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery, VendorData, Social, VendorCeoImgs, Promotions
 
 
 class OrdersAdmin(admin.ModelAdmin):
-    list_display = ('order_id','order_status', 'timestamp',)
+    list_display = ('order_id', 'order_status', 'timestamp',
+                    'reference_no', 'payment_type',)
     list_editable = ('order_status',)
 
 

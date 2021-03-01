@@ -24,3 +24,4 @@ PyJWT==1.7.1
 django-graphql-playground
 django-hosts
 python-memcached
+django-jet

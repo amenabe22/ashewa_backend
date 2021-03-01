@@ -8,12 +8,25 @@ from .models import (UnilevelNetwork, AffilatePlans, CoreMlmOrders, CoreVendorTe
 from core_marketing.models import CoreMarketingSetting
 from django.core.mail import send_mail
 from django.conf import settings
+from .utils import get_pv_rate
 
 
 def core_mail_sender(subject, message, recipient_list):
     email_from = settings.EMAIL_HOST_USER
     send_mail(subject, message, email_from, recipient_list)
     print("EMAIL SENT")
+
+
+def get_updated_aff_data(current_mptt):
+    allDownline = current_mptt.get_descendants(include_self=True)
+    allDown = []
+    allDirect = []
+    for des in allDownline:
+        if(des == current_mptt):
+            allDirect.append(des)
+        else:
+            allDown.append(des)
+    return (len(allDirect), len(allDown))
 
 
 @receiver(post_save, sender=CoreVendorMlmOrders)
@@ -162,7 +175,7 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                 )
             elif affilate.exists():
                 affilate = affilate[0]
-            AffilatePlans.objects.create(
+            newAffPlan = AffilatePlans.objects.create(
                 affilate=affilate,
                 plan_type='core',
                 core_plan=instance.product,
@@ -187,15 +200,7 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                 # allRanks = []
                 [allDirect.append(x) for x in allDescendants if (x.level == 1)]
                 [allDown.append(x) for x in allDescendants if (x.level > 1)]
-                marketing_setting = CoreMarketingSetting.objects.filter(
-                    final=True)
-
-                if not marketing_setting.exists():
-                    # default incase of no data
-                    pv_etb_rate = 3
-                else:
-                    pv_etb_rate = marketing_setting[0].pv_rate_etb
-
+                pv_etb_rate = get_pv_rate()
                 # reward bonus for this specific user
                 if instance.product.has_purchase_bonus:
                     userWallet = Marketingwallet.objects.get(
@@ -209,25 +214,25 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                     affWallet.amount += pv_etb_rate*purchase_bonus
                     affWallet.save()
                     userWallet.save()
-                # save all ranks
-                # [allRanks.append(rank) for rank in Rank.objects.all()]
-                # print(allAncestors, 'ALL ANCESTORS')
-                # for ancestor in allAncestors:
-                #     print(ancestor.user, "ANCES")
-                # for usrs, ranks in zip(allAncestors, allRanks):
-                #     # the current affilate
-                #     aff = Affilate.objects.get(user=usrs.user)
-                #     mWallet = Marketingwallet.objects.get(
-                #         user=usrs.user
-                #     )
-                #     usr_pv = mWallet.pv_count
-                #     print("RANKS {}".format(ranks))
-                #     print("USERS PV => {}".format(usr_pv))
-                #     if (ranks.count_based_on == 'pvval' and usr_pv == ranks.total_pv_count):
-                #         print("user is ELLIGIABLE FOR RANK")
+                    naff = AffilatePlans.objects.get(
+                        affilate=affilate,
+                        plan_type='core',
+                        core_plan=instance.product,
+                    )
+                    naff.total_earned += pv_etb_rate*purchase_bonus
+                    naff.total_earned_pv += purchase_bonus
+                    naff.save()
                 for usrs, x in zip(allAncestors, allLvl):
                     # award pv for all the ancestors above the current user
+                    # get the new updated affilates direct and downline counts
+                    all_direct, all_downline = get_updated_aff_data(usrs)
+                    print(usrs.user,"<=>"*30)
                     aff = Affilate.objects.get(user=usrs.user)
+                    anAfPackage = AffilatePlans.objects.get(
+                        affilate=aff,
+                        plan_type='core',
+                        core_plan=instance.product,
+                    )
                     mWallet = Marketingwallet.objects.get(
                         user=usrs.user
                     )
@@ -243,6 +248,15 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                     mWallet.amount += pv_etb_rate*(money.joining_pv * fare)
                     mWallet.pv_count += money.joining_pv
                     mWallet.save()
+                    anAfPackage.total_earned += pv_etb_rate * \
+                        (money.joining_pv * fare)
+                    # update directs count
+                    anAfPackage.total_direct_referrals = all_direct
+                    # update downlines count
+                    anAfPackage.total_downline = all_downline
+                    # update the earned pv for all the descendants
+                    anAfPackage.total_earned_pv += money.joining_pv*fare
+                    anAfPackage.save()
                     print(aff, "FARE = {}".format(fare),
                           "AMT {}".format(money.joining_pv))
                     aff.save_mplan_data(
@@ -258,13 +272,30 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                     parent=sponsor
                 )
             else:
+                if instance.product.has_purchase_bonus:
+                    userWallet = Marketingwallet.objects.get(
+                        user=instance.ordered_by)
+                    affWallet = Ewallet.objects.get(
+                        user=instance.ordered_by
+                    )
+                    purchase_bonus = instance.product.purchase_bonus
+                    userWallet.amount += get_pv_rate() * purchase_bonus
+                    userWallet.pv_count = purchase_bonus
+                    affWallet.amount += get_pv_rate()*purchase_bonus
+                    affWallet.save()
+                    userWallet.save()
+                    naff = AffilatePlans.objects.get(
+                        affilate=affilate,
+                        plan_type='core',
+                        core_plan=instance.product,
+                    )
+                    naff.total_earned += get_pv_rate()*purchase_bonus
+                    naff.total_earned_pv += purchase_bonus
+                    naff.save()
                 CoreTestMpttNode.objects.create(
                     user=instance.ordered_by,
                     marketing_plan=instance.product,
                     parent=None
                 )
-                print("NIBBAA")
-                # sponsor = None
-
             instance.paid_already = True
             instance.save()

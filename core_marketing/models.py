@@ -52,6 +52,9 @@ class CoreMlmOrders(models.Model):
     order_status = models.CharField(
         max_length=10, choices=order_stats, default='pen')
     paid_already = models.BooleanField(default=False)
+    reference_no = models.CharField(max_length=300, null=True, blank=True)
+    payment_type = models.ForeignKey(
+        'core_ecommerce.PaymentType', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return str(self.core_order_id)
@@ -81,6 +84,9 @@ class CoreVendorMlmOrders(models.Model):
     order_status = models.CharField(
         max_length=10, choices=order_stats, default='pen')
     paid_already = models.BooleanField(default=False)
+    reference_no = models.CharField(max_length=300, null=True,blank=True)
+    payment_type = models.ForeignKey(
+        'core_ecommerce.PaymentType', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return str(self.core_order_id)

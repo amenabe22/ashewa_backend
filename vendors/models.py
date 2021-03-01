@@ -2,6 +2,7 @@ from django.db import models
 from uuid import uuid4
 from accounts.models import CustomUser
 from django.db import models
+# from core_ecommerce.models import PaymentType
 # Create your models here.
 
 
@@ -92,14 +93,17 @@ class Order(models.Model):
         to='core_ecommerce.Products', on_delete=models.CASCADE, blank=True, null=True)
     # product = models.ForeignKey(
     #     to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
-    reference_no = models.CharField(max_length=300, null=True)
     timestamp = models.DateTimeField(
         auto_now_add=True, editable=True, null=True)
     order_status = models.CharField(
         max_length=10, choices=order_stats, default='pen')
+    reference_no = models.CharField(max_length=300, null=True,blank=True)
+    payment_type = models.ForeignKey(
+        'core_ecommerce.PaymentType', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return str(self.core_order_id)
+
 
 class Social(models.Model):
     social_name = models.CharField(max_length=100)
@@ -110,8 +114,10 @@ class Social(models.Model):
     def __str__(self):
         return self.social_name
 
+
 class VendorCeoImgs(models.Model):
     ceo_img = models.ImageField(upload_to='about/ceo/image', null=True)
+
 
 class Promotions(models.Model):
     image = models.ImageField(upload_to="promotions", null=True)
@@ -120,9 +126,11 @@ class Promotions(models.Model):
 
     def __str__(self):
         return self.label
-    
+
+
 class VendorData(models.Model):
-    store_name = models.OneToOneField(Vendor, on_delete=models.CASCADE, null=True)
+    store_name = models.OneToOneField(
+        Vendor, on_delete=models.CASCADE, null=True)
     store_desc = models.TextField(null=True)
     phone = models.CharField(max_length=250, null=True)
     email = models.CharField(max_length=250, null=True)
