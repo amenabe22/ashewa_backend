@@ -133,10 +133,11 @@ class Query(graphene.ObjectType):
         wallet = Marketingwallet.objects.get(user=info.context.user)
         affilate = Affilate.objects.get(user=info.context.user)
         affilatePlans = AffilatePlans.objects.filter(affilate=affilate)
-        packagesData = {'allDirect': [], 'allDown': []}
+        packagesData = {'allDirect': 0, 'allDown': 0}
         for plans in affilatePlans:
-            packagesData['allDirect'].append(plans.total_direct_referrals)
-            packagesData['allDown'].append(plans.total_downline)
+            print(plans.total_direct_referrals,"|)"*20)
+            packagesData['allDirect'] += plans.total_direct_referrals
+            packagesData['allDown'] += plans.total_downline
         rank = "NO RANK"
         if affilate.affilate_rank:
             rank = affilate.affilate_rank.rank_name
@@ -144,8 +145,8 @@ class Query(graphene.ObjectType):
             'has_package': affilatePlans.exists(),
             'total_amount': wallet.amount,
             'total_pv': wallet.pv_count,
-            'allDirect': len(packagesData['allDirect']),
-            'allDown': len(packagesData['allDown']),
+            'allDirect': packagesData['allDirect'],
+            'allDown': packagesData['allDown'],
             'affilateRank': rank
         }
         return payload
