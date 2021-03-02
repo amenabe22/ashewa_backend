@@ -138,8 +138,10 @@ class Query(graphene.ObjectType):
             packagesData['allDirect'].append(plans.total_direct_referrals)
             packagesData['allDown'].append(plans.total_downline)
         rank = "NO RANK"
-        if affilate.affilate_rank: rank = affilate.affilate_rank.rank_name
+        if affilate.affilate_rank:
+            rank = affilate.affilate_rank.rank_name
         payload = {
+            'has_package': affilatePlans.exists(),
             'total_amount': wallet.amount,
             'total_pv': wallet.pv_count,
             'allDirect': len(packagesData['allDirect']),
