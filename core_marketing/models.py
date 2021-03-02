@@ -400,6 +400,8 @@ class CoreTestMpttNode(MPTTModel):
                             null=True, blank=True, related_name='children')
     marketing_plan = models.ForeignKey(
         CoreLevelPlans, on_delete=models.CASCADE, null=True)
+    parent_earning_etb = models.BigIntegerField(default=0, null=True)
+    parent_earning_pv = models.BigIntegerField(default=0, null=True)
     timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
     class MPTTMeta:

@@ -58,7 +58,6 @@ def core_vendor_mlm_order_approval_handler(sender, instance, **kwargs):
                 plan_type='ven',
                 vendor_plan=instance.product,
             )
-
             if CoreVendorTestMpttNode.objects.filter(marketing_plan=instance.product).exists():
                 # get the sponsor from the valid input
                 sponsor = CoreVendorTestMpttNode.objects.get(
@@ -139,7 +138,7 @@ def reward_ranks(ancestors):
                 )
                 print("REWARD {} GIVEN TO {}".format(
                     reward_report.reward.reward_name, affilate.user.email))
-                emailMessage = """<h2>Congratulations !!!!</h2> \nYou have achieved the Ashewa {} Reward.\nYou can contact us at {} and we will be intouch with you with details of your reward. \n Thanks For working with Ashewa !!!""".format(
+                emailMessage = """Congratulations !!!! \nYou have achieved the Ashewa {} Reward.\nYou can contact us at {} and we will be intouch with you with details of your reward. \n Thanks For working with Ashewa !!!""".format(
                     reward[0].reward_name, "0911928233"
                 )
                 emailSubject = "Ashewa Reward Achievement"
@@ -180,6 +179,8 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                 plan_type='core',
                 core_plan=instance.product,
             )
+            parent_earning_etb = 0
+            parent_earning_pv = 0
 
             if CoreTestMpttNode.objects.filter(marketing_plan=instance.product).exists():
                 # get the sponsor from the valid input
@@ -226,7 +227,7 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                     # award pv for all the ancestors above the current user
                     # get the new updated affilates direct and downline counts
                     all_direct, all_downline = get_updated_aff_data(usrs)
-                    print(usrs.user,"<=>"*30)
+                    print(usrs.user, "<=>"*30)
                     aff = Affilate.objects.get(user=usrs.user)
                     anAfPackage = AffilatePlans.objects.get(
                         affilate=aff,
@@ -257,19 +258,29 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                     # update the earned pv for all the descendants
                     anAfPackage.total_earned_pv += money.joining_pv*fare
                     anAfPackage.save()
-                    print(aff, "FARE = {}".format(fare),
-                          "AMT {}".format(money.joining_pv))
+                    # if usrs == sponsor:
+                    print("_"*40)
+                    print("$"*40, "=====", sponsor.user, "@@@@@222@2")
+                    usrs.parent_earning_etb += pv_etb_rate * \
+                        (money.joining_pv * fare)
+                    usrs.parent_earning_pv += money.joining_pv * fare
+                    usrs.save()
+                    print("_"*40)
+                    # print(aff, "FARE = {}".format(fare),
+                    #       "AMT {}".format(money.joining_pv))
                     aff.save_mplan_data(
                         len(allDirect), mWallet.amount, len(allDown), money)
                     # grant ranks for those who deserve it
-                    print("USER => {} & PV => {}".format(
-                        usrs.user, mWallet.pv_count))
+                    # print("USER => {} & PV => {}".format(
+                    #     usrs.user, mWallet.pv_count))
                 reward_ranks(allAncestors)
 
                 CoreTestMpttNode.objects.create(
                     user=instance.ordered_by,
                     marketing_plan=instance.product,
-                    parent=sponsor
+                    parent=sponsor,
+                    parent_earning_etb=parent_earning_etb,
+                    parent_earning_pv=parent_earning_pv
                 )
             else:
                 if instance.product.has_purchase_bonus:
