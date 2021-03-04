@@ -3,7 +3,8 @@ from django.contrib.auth.models import Group
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, UserProfile, Affilate, Admin, StaffPrivillage
+from .models import(CustomUser, UserProfile, Affilate,
+                    Admin, StaffPrivillage, RepurchaseBonusLevel)
 
 # admin.site.register(CustomUser)
 
@@ -96,3 +97,4 @@ admin.site.register(UserProfile)
 admin.site.register(Affilate, AffilateAdmin)
 admin.site.register(Admin)
 admin.site.register(StaffPrivillage)
+admin.site.register(RepurchaseBonusLevel)
