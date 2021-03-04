@@ -61,13 +61,40 @@ class StaffPrivillage(models.Model):
         return str(self.staff_id)
 
 
+class RepurchaseBonusLevel(models.Model):
+    level_id = models.UUIDField(
+        default=uuid4, editable=False, primary_key=True, unique=True)
+    level1_percentage = models.FloatField(
+        default=0.0, null=True, blank=True, help_text="First core level")
+    level2_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level3_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level4_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level5_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level6_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level7_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level8_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level9_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level10_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level11_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level12_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level13_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level14_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    level15_percentage = models.FloatField(default=0.0, null=True, blank=True)
+
+    def __str__(self):
+        return str(self.level_id)
+
+
 class CoreLevelPlans(models.Model):
     core_id = models.UUIDField(
         default=uuid4, editable=False, primary_key=True)
     creator = models.ForeignKey(Admin, on_delete=models.CASCADE, null=True)
     # optional multi level percentages
     plan_name = models.CharField(max_length=500, null=True)
-    repurchase_bonus = models.IntegerField(default=0, null=True)
+    repurchase_bonus_percent = models.IntegerField(
+        default=0, null=True, blank=True, help_text="Percentage or repurchase bonus goes here.")
+    repurchase_level = models.ForeignKey(
+        RepurchaseBonusLevel, on_delete=models.CASCADE, null=True, blank=True)
     joining_fee = models.FloatField(
         default=0.0, null=True)
     joining_pv = models.IntegerField(
