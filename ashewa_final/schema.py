@@ -122,11 +122,12 @@ class Query(graphene.ObjectType):
         CoreUsersType, plan=graphene.String(), current=graphene.Boolean(),
         usr=graphene.String(), ptype=graphene.String()
     )
-    get_store_data = graphene.Field(VendorType)
+    get_store_data = graphene.Field(VendorType, store=graphene.String())
     get_vendor_data_images = graphene.List(
         VendorDataImageType, store=graphene.String())
     user_privillage_info = graphene.List(UsersDataType)
     get_payment_methods = graphene.List(PaymentTypeAdmin)
+    get_store_contents = graphene.List(VendorType, store=graphene.String())
 
     @permissions_checker([IsAuthenticated])
     def resolve_affilate_overview(self, info):
@@ -135,7 +136,7 @@ class Query(graphene.ObjectType):
         affilatePlans = AffilatePlans.objects.filter(affilate=affilate)
         packagesData = {'allDirect': 0, 'allDown': 0}
         for plans in affilatePlans:
-            print(plans.total_direct_referrals,"|)"*20)
+            print(plans.total_direct_referrals, "|)"*20)
             packagesData['allDirect'] += plans.total_direct_referrals
             packagesData['allDown'] += plans.total_downline
         rank = "NO RANK"
@@ -473,6 +474,10 @@ class Query(graphene.ObjectType):
     def resolve_get_store_data(self, info):
         st = Vendor.objects.filter(user=info.context.user)
         return st[0]
+    
+    def resolve_get_store_contents(self, info, store):
+        st = Vendor.objects.filter(vendor_id=store)
+        return st
 
     def resolve_store_meta_data(self, info, store):
         return Vendor.objects.filter(vendor_id=store)

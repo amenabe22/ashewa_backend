@@ -83,4 +83,5 @@ class UpdateProfilePic(graphene.Mutation):
             prof = profile[0]
         prof.profile_pic = pic
         prof.save()
+        
         return UpdateProfilePic(payload=prof)
