@@ -67,6 +67,7 @@ class CoreLevelPlans(models.Model):
     creator = models.ForeignKey(Admin, on_delete=models.CASCADE, null=True)
     # optional multi level percentages
     plan_name = models.CharField(max_length=500, null=True)
+    repurchase_bonus = models.IntegerField(default=0, null=True)
     joining_fee = models.FloatField(
         default=0.0, null=True)
     joining_pv = models.IntegerField(
