@@ -6,7 +6,8 @@ from .admin_mutations import CreateMarketingPlans
 from core_ecommerce.types import (LandingCarsType, LandingCatBlockType, UsrOrderType,
                                   ProductImageType, ProductsType, ParentCategoryType,
                                   CategoryType, SubCatsType, ProductsPaginatedType, PaymentTypeAdmin)
-from vendors.vendor_mutations import UpdateStoreCover, CreateOrder, LoadCart, PopCart, UpdateStoreData, VendorDataAdd
+from vendors.vendor_mutations import (
+    UpdateStoreCover, CreateOrder, LoadCart, PopCart, UpdateStoreData, VendorDataAdd, AddStorePromotions)
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
@@ -274,6 +275,8 @@ class Query(graphene.ObjectType):
 
     def resolve_filter_prods(self, info, pcat, page_size, page, minP, maxP, ranged):
         if pcat is not None:
+            if pcat.lower() == "all":
+                return get_core_paginator(Products.objects.all().order_by('-created_timestamp'), page_size, page, None, ProductsPaginatedType)
             try:
                 # check ranged status
                 if ranged:
@@ -474,7 +477,7 @@ class Query(graphene.ObjectType):
     def resolve_get_store_data(self, info):
         st = Vendor.objects.filter(user=info.context.user)
         return st[0]
-    
+
     def resolve_get_store_contents(self, info, store):
         st = Vendor.objects.filter(vendor_id=store)
         return st
@@ -659,6 +662,7 @@ class Mutations(graphene.ObjectType):
     update_password = ChangePasswordMutation.Field()
     create_vendor_data = VendorDataAdd.Field()
     update_profile_pic = UpdateProfilePic.Field()
+    add_store_promotions = AddStorePromotions.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

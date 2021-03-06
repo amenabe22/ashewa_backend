@@ -125,7 +125,7 @@ class Promotions(models.Model):
     label = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.label
+        return str(self.pk)
 
 
 class VendorData(models.Model):

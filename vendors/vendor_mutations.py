@@ -1,12 +1,14 @@
 import graphene
 from graphene_file_upload.scalars import Upload
 from vendors.models import Vendor, VendorLevelPlans
-from .models import VendorLevelPlans, Vendor, Order, Cart, VenodrGallery, VendorData, Social, Promotions
+from .models import (VendorLevelPlans, Vendor, Order, Cart,
+                     VenodrGallery, VendorData, Social, Promotions)
 from django_graphene_permissions import permissions_checker
 from ashewa_final.core_perimssions import VendorsPermission, AdminPermission
 from django_graphene_permissions.permissions import IsAuthenticated
 from core_ecommerce.models import Products
 from core_marketing.models import BillingInfo
+from graphene_file_upload.scalars import Upload
 
 
 class ProductsInput(graphene.InputObjectType):
@@ -50,6 +52,8 @@ class LoadCart(graphene.Mutation):
         return LoadCart(payload=True)
 
 # TODO: manage mlm conf
+
+
 class CreateOrder(graphene.Mutation):
     payload = graphene.Boolean()
 
@@ -215,6 +219,7 @@ class createSocialLink(graphene.Mutation):
         social.save()
         return createSocialLink(payload=True)
 
+
 class createPromotions(graphene.Mutation):
     payload = graphene.Boolean()
 
@@ -228,3 +233,29 @@ class createPromotions(graphene.Mutation):
         prom.save()
 
         return createPromotions(payload=True)
+
+
+class AddStorePromotions(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        images = Upload()
+        label = graphene.String()
+        size = graphene.String()
+
+    @permissions_checker([VendorsPermission, IsAuthenticated])
+    def mutate(self, info, images, label, size):
+        vendor = Vendor.objects.filter(user=info.context.user)
+        vendor_data = VendorData.objects.filter(store_name=vendor[0])
+        if not vendor_data.exists():
+            v_data = VendorData.objects.create(store_name=vendor[0])
+        else:
+            v_data = vendor_data[0]
+        for pic in images:
+            v_data.promotions.create(
+                label=label, size=size,
+                image=pic
+            )
+            print(pic,"SSSSSSS")
+            v_data.save()
+        return AddStorePromotions(payload=True)
