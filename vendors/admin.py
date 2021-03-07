@@ -3,7 +3,7 @@ from .models import Vendor, VendorLevelPlans, Order, Cart, VenodrGallery, Vendor
 
 
 class OrdersAdmin(admin.ModelAdmin):
-    list_display = ('order_id', 'order_status', 'timestamp',
+    list_display = ('order_id', 'order_status', 'timestamp', 'product','ordered_by',
                     'reference_no', 'payment_type',)
     list_editable = ('order_status',)
 

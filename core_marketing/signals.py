@@ -261,10 +261,11 @@ def core_mlm_order_approval_handler(sender, instance, **kwargs):
                     # if usrs == sponsor:
                     print("_"*40)
                     print("$"*40, "=====", sponsor.user, "@@@@@222@2")
-                    usrs.parent_earning_etb += pv_etb_rate * \
-                        (money.joining_pv * fare)
-                    usrs.parent_earning_pv += money.joining_pv * fare
-                    usrs.save()
+                    # to see how much earned per node old code to be removed
+                    # usrs.parent_earning_etb += pv_etb_rate * \
+                    #     (money.joining_pv * fare)
+                    # usrs.parent_earning_pv += money.joining_pv * fare
+                    # usrs.save()
                     print("_"*40)
                     # print(aff, "FARE = {}".format(fare),
                     #       "AMT {}".format(money.joining_pv))

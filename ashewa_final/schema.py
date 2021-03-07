@@ -6,7 +6,7 @@ from .admin_mutations import CreateMarketingPlans
 from core_ecommerce.types import (LandingCarsType, LandingCatBlockType, UsrOrderType,
                                   ProductImageType, ProductsType, ParentCategoryType,
                                   CategoryType, SubCatsType, ProductsPaginatedType, PaymentTypeAdmin)
-from vendors.vendor_mutations import (
+from vendors.vendor_mutations import (UpdateOrderRef,
     UpdateStoreCover, CreateOrder, LoadCart, PopCart, UpdateStoreData, VendorDataAdd, AddStorePromotions)
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
@@ -27,7 +27,7 @@ from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTy
 from core_ecommerce.product_mutations import(EditProduct,
                                              NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import (EmptyCart, CreateVendorPackageOrder,
+from core_marketing.marketing_mutations import (EmptyCart, CreateVendorPackageOrder, 
                                                 AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage, EditVendorLevelPackage)
 from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
@@ -130,6 +130,15 @@ class Query(graphene.ObjectType):
     get_payment_methods = graphene.List(PaymentTypeAdmin)
     get_store_contents = graphene.List(VendorType, store=graphene.String())
     get_all_repurchase = graphene.List(CoreMarketingPlanTypes)
+    order_detail = graphene.Field(OrdersType, order=graphene.String())
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_order_detail(self, info, order):
+        orderSet = Order.objects.filter(
+            order_id=order, ordered_by=info.context.user)
+        if not orderSet.exists():
+            raise Exception("order not found")
+        return orderSet[0]
 
     @permissions_checker([IsAuthenticated])
     def resolve_get_all_repurchase(self, info):
@@ -669,6 +678,6 @@ class Mutations(graphene.ObjectType):
     create_vendor_data = VendorDataAdd.Field()
     update_profile_pic = UpdateProfilePic.Field()
     add_store_promotions = AddStorePromotions.Field()
-
+    update_order_ref = UpdateOrderRef.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

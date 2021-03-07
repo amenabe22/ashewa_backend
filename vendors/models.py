@@ -2,6 +2,7 @@ from django.db import models
 from uuid import uuid4
 from accounts.models import CustomUser
 from django.db import models
+from random import randint
 # from core_ecommerce.models import PaymentType
 # Create your models here.
 
@@ -85,10 +86,13 @@ class Order(models.Model):
     billing_info = models.ForeignKey(
         to='core_marketing.BillingInfo', on_delete=models.CASCADE, null=True)
     order_id = models.UUIDField(default=uuid4, editable=False)
+    ord_id = models.CharField(max_length=10, default=''.join(["{}".format(randint(0, 9)) for num in range(0, 4)])
+                              )
     ordered_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     ordered_from = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     product = models.ForeignKey(
         to='core_ecommerce.Products', on_delete=models.CASCADE, blank=True, null=True)
+    paid_already = models.BooleanField(default=False)
     # product = models.ForeignKey(
     #     to='core_ecommerce.Products', on_delete=models.CASCADE,  null=True)
     timestamp = models.DateTimeField(
@@ -96,6 +100,8 @@ class Order(models.Model):
     order_status = models.CharField(
         max_length=10, choices=order_stats, default='pen')
     reference_no = models.CharField(max_length=300, null=True, blank=True)
+    sponsor = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='vendor_sponsor')
     payment_type = models.ForeignKey(
         'core_ecommerce.PaymentType', on_delete=models.CASCADE, null=True)
 

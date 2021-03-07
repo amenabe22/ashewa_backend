@@ -2,7 +2,8 @@ import graphene
 from accounts.models import Affilate
 from graphene_django import DjangoObjectType
 from accounts.types import AffilateType, CoreUsersType
-from .models import CoreLevelPlans, UnilevelNetwork, AffilatePlans, UserMessages, CoreDocs, CoreTestMpttNode, CoreVendorMlmOrders, CoreMlmOrders
+from .models import(CoreLevelPlans, UnilevelNetwork, AffilatePlans, UserMessages,
+                    CoreDocs, CoreTestMpttNode, CoreVendorMlmOrders, CoreMlmOrders, BillingInfo)
 
 
 class CoreMlmOrderType(DjangoObjectType):
@@ -84,3 +85,7 @@ class CorePlanPaginatedType(graphene.ObjectType):
 class LinesDataType(graphene.ObjectType):
     name = graphene.String()
     value = graphene.String()
+
+class BillingInfotype(DjangoObjectType):
+    class Meta:
+        model = BillingInfo

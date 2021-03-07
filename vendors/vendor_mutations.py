@@ -9,6 +9,8 @@ from django_graphene_permissions.permissions import IsAuthenticated
 from core_ecommerce.models import Products
 from core_marketing.models import BillingInfo
 from graphene_file_upload.scalars import Upload
+from accounts.models import CustomUser
+from core_ecommerce.models import PaymentType
 
 
 class ProductsInput(graphene.InputObjectType):
@@ -62,10 +64,19 @@ class CreateOrder(graphene.Mutation):
         name = graphene.String()
         phone = graphene.String()
         address = graphene.String()
+        # take the sponsor in
+        sponsor = graphene.String()
+        payment_type = graphene.String()
 
     @permissions_checker([IsAuthenticated])
-    def mutate(self, info, products, name, phone, address):
+    def mutate(self, info, products, name, phone, address, sponsor, payment_type):
         # create the order here
+        sponsorSet = CustomUser.objects.filter(user_id=sponsor)
+        if not sponsorSet.exists():
+            raise Exception("sponsor not found")
+        payment_type_set = PaymentType.objects.filter(type_id=payment_type)
+        if not payment_type_set.exists():
+            raise Exception("payment type not found")
         try:
             hasErr = False
             if Vendor.objects.filter(user=info.context.user).exists():
@@ -81,7 +92,8 @@ class CreateOrder(graphene.Mutation):
                 order = Order.objects.create(
                     ordered_by=info.context.user,
                     ordered_from=prd.vendor,
-                    product=prd
+                    product=prd, sponsor=sponsorSet[0],
+                    payment_type=payment_type_set[0]
                 )
                 order.billing_info = BillingInfo.objects.create(
                     full_name=name, phone=phone, address=address
@@ -256,6 +268,27 @@ class AddStorePromotions(graphene.Mutation):
                 label=label, size=size,
                 image=pic
             )
-            print(pic,"SSSSSSS")
+            print(pic, "SSSSSSS")
             v_data.save()
         return AddStorePromotions(payload=True)
+
+
+class UpdateOrderRef(graphene.Mutation):
+    payload = graphene.Boolean()
+
+    class Arguments:
+        ref = graphene.String()
+        order = graphene.String()
+        ptype = graphene.String()
+
+    @permissions_checker([IsAuthenticated])
+    def mutate(self, info, ref, order, ptype):
+        ptypeSet = PaymentType.objects.filter(type_id=ptype)
+        if not ptypeSet.exists():
+            raise Exception("payment type not known")
+        orderSet = Order.objects.filter(
+            ordered_by=info.context.user, order_id=order)
+        if not orderSet.exists():
+            raise Exception("order not found")
+        orderSet.update(reference_no=ref, payment_type=ptypeSet[0])
+        return UpdateOrderRef(payload=True)
