@@ -35,21 +35,20 @@ class EditVendorLevelPackage(graphene.Mutation):
         plan_name = graphene.String()
         plan_desc = graphene.String()
         purchase_bonus = graphene.Float()
-        level_1 = graphene.Float()
-        level_2 = graphene.Float()
-        level_3 = graphene.Float()
-        level_4 = graphene.Float()
         plan = graphene.String()
+        linked_package = graphene.String()
 
     @permissions_checker([VendorsPermission, IsAuthenticated])
-    def mutate(self, info, plan_name, plan_desc, level_1, level_2, level_3, level_4, purchase_bonus, plan):
+    def mutate(self, info, plan_name, plan_desc, purchase_bonus, plan, linked_package):
         vendor = Vendor.objects.get(user=info.context.user)
+        linkedSet = CoreLevelPlans.objects.filter(core_id=linked_package)
+        if not linkedSet.exists():
+            raise Exception("package not found")
         try:
             plan = VendorLevelPlans.objects.filter(
                 core_id=plan, creator=vendor)
-            plan.update(plan_name=plan_name, plan_description=plan_desc,
-                        level1_percentage=level_1, level2_percentage=level_2, level3_percentage=level_3,
-                        level4_percentage=level_4, purchase_bonus=purchase_bonus
+            plan.update(plan_name=plan_name, plan_description=plan_desc, purchase_bonus=purchase_bonus,
+                        linked_package=linkedSet[0]
                         )
             # plan = VendorLevelPlans.objects.create(
             #     creator=vendor, plan_name=plan_name, plan_description=plan_desc,
@@ -68,19 +67,18 @@ class CreateVendorPackage(graphene.Mutation):
         plan_name = graphene.String()
         plan_desc = graphene.String()
         purchase_bonus = graphene.Float()
-        level_1 = graphene.Float()
-        level_2 = graphene.Float()
-        level_3 = graphene.Float()
-        level_4 = graphene.Float()
+        linked_package = graphene.String()
 
     @permissions_checker([VendorsPermission, IsAuthenticated])
-    def mutate(self, info, plan_name, plan_desc, level_1, level_2, level_3, level_4, purchase_bonus):
+    def mutate(self, info, plan_name, plan_desc, purchase_bonus, linked_package):
         vendor = Vendor.objects.get(user=info.context.user)
+        package_set = CoreLevelPlans.objects.filter(core_id=linked_package)
+        if not package_set.exists():
+            raise Exception("package not found")
         try:
             plan = VendorLevelPlans.objects.create(
                 creator=vendor, plan_name=plan_name, plan_description=plan_desc,
-                level1_percentage=level_1, level2_percentage=level_2, level3_percentage=level_3,
-                level4_percentage=level_4, purchase_bonus=purchase_bonus
+                purchase_bonus=purchase_bonus, linked_package=package_set[0]
             )
         except Exception as e:
             raise Exception(str(e))
@@ -193,7 +191,6 @@ class CreateCoreMlmOrder(graphene.Mutation):
                 user_id=sponsor
             ), payment_type=payment_type[0])
         # if this marketing plan is getting registered for the first time then consider it as the first ancestor of the whole network
-
 
         return CreateCoreMlmOrder(payload=True)
 

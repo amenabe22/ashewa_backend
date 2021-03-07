@@ -91,8 +91,7 @@ class CoreLevelPlans(models.Model):
     creator = models.ForeignKey(Admin, on_delete=models.CASCADE, null=True)
     # optional multi level percentages
     plan_name = models.CharField(max_length=500, null=True)
-    repurchase_bonus_percent = models.IntegerField(
-        default=0, null=True, blank=True, help_text="Percentage or repurchase bonus goes here.")
+    is_repurchase = models.BooleanField(default=False)
     repurchase_level = models.ForeignKey(
         RepurchaseBonusLevel, on_delete=models.CASCADE, null=True, blank=True)
     joining_fee = models.FloatField(

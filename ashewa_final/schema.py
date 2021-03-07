@@ -129,6 +129,12 @@ class Query(graphene.ObjectType):
     user_privillage_info = graphene.List(UsersDataType)
     get_payment_methods = graphene.List(PaymentTypeAdmin)
     get_store_contents = graphene.List(VendorType, store=graphene.String())
+    get_all_repurchase = graphene.List(CoreMarketingPlanTypes)
+
+    @permissions_checker([IsAuthenticated])
+    def resolve_get_all_repurchase(self, info):
+        allRep = CoreLevelPlans.objects.filter(is_repurchase=True)
+        return allRep
 
     @permissions_checker([IsAuthenticated])
     def resolve_affilate_overview(self, info):

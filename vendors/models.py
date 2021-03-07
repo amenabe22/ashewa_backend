@@ -31,29 +31,27 @@ class VendorLevelPlans(models.Model):
     creator = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     # optional multi level percentages
     plan_name = models.CharField(max_length=500, null=True)
-    # joining_fee = models.FloatField(default=0.0, null=True)
-    # plan_image = models.ImageField(
-    #     upload_to='plan/image/', null=True, blank=True)
-    show_plan_form = models.BooleanField(default=False)
     purchase_bonus = models.FloatField(
         null=True, blank=True, help_text='bonus amount')
+    linked_package = models.ForeignKey(
+        to='accounts.CoreLevelPlans', null=True, on_delete=models.CASCADE)
     plan_description = models.TextField(null=True, blank=True)
-    level1_percentage = models.FloatField(
-        default=0.0, null=True, blank=True, help_text="First core level")
-    level2_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level3_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level4_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level5_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level6_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level7_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level8_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level9_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level10_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level11_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level12_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level13_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level14_percentage = models.FloatField(default=0.0, null=True, blank=True)
-    level15_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level1_percentage = models.FloatField(
+    #     default=0.0, null=True, blank=True, help_text="First core level")
+    # level2_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level3_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level4_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level5_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level6_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level7_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level8_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level9_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level10_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level11_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level12_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level13_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level14_percentage = models.FloatField(default=0.0, null=True, blank=True)
+    # level15_percentage = models.FloatField(default=0.0, null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
@@ -97,7 +95,7 @@ class Order(models.Model):
         auto_now_add=True, editable=True, null=True)
     order_status = models.CharField(
         max_length=10, choices=order_stats, default='pen')
-    reference_no = models.CharField(max_length=300, null=True,blank=True)
+    reference_no = models.CharField(max_length=300, null=True, blank=True)
     payment_type = models.ForeignKey(
         'core_ecommerce.PaymentType', on_delete=models.CASCADE, null=True)
 

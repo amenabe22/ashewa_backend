@@ -37,9 +37,9 @@ class CoreVendorMlmOrdersAdmin(admin.ModelAdmin):
 
 class CoreMlmOrdersAdmin(admin.ModelAdmin):
     list_display = ('ordered_by', 'product',
-                    'order_status', 'payment_type', 'reference_no', 'paid_already','timestamp',)
+                    'order_status', 'payment_type', 'reference_no', 'paid_already', 'timestamp',)
     list_editable = ('order_status', )
-    search_fields =['ordered_by__username',]
+    search_fields = ['ordered_by__username', ]
     # list_editable = ('affilate',)
 
 
@@ -58,7 +58,12 @@ class RewardsReportAdmin(admin.ModelAdmin):
     list_display = ('reward', 'affilate', 'timestamp',)
 
 
-admin.site.register(CoreLevelPlans)
+class CoreLevelPlansAdmin(admin.ModelAdmin):
+    list_display = ('creator', 'plan_name', 'is_repurchase',
+                    'joining_fee', 'has_purchase_bonus', 'purchase_bonus',)
+    list_display_links= ('creator','plan_name',)
+
+admin.site.register(CoreLevelPlans, CoreLevelPlansAdmin)
 admin.site.register(CoreBrand)
 admin.site.register(Ewallet)
 admin.site.register(Marketingwallet, MarketingWalletAdmin)
