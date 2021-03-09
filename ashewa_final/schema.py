@@ -7,7 +7,7 @@ from core_ecommerce.types import (LandingCarsType, LandingCatBlockType, UsrOrder
                                   ProductImageType, ProductsType, ParentCategoryType,
                                   CategoryType, SubCatsType, ProductsPaginatedType, PaymentTypeAdmin)
 from vendors.vendor_mutations import (UpdateOrderRef,
-    UpdateStoreCover, CreateOrder, LoadCart, PopCart, UpdateStoreData, VendorDataAdd, AddStorePromotions)
+                                      UpdateStoreCover, CreateOrder, LoadCart, PopCart, UpdateStoreData, VendorDataAdd, AddStorePromotions)
 from graphene_django import DjangoObjectType
 from django_graphene_permissions import permissions_checker
 from django_graphene_permissions.permissions import IsAuthenticated
@@ -27,7 +27,7 @@ from core_marketing.types import(LinesDataType, CoreVendDataType, UserMessagesTy
 from core_ecommerce.product_mutations import(EditProduct,
                                              NewProductMutation, CreateParentCategory, CreateCategory, CreateSubCategory)
 from core_marketing.core_manager import UniLevelMarketingNetworkManager
-from core_marketing.marketing_mutations import (EmptyCart, CreateVendorPackageOrder, 
+from core_marketing.marketing_mutations import (EmptyCart, CreateVendorPackageOrder,
                                                 AddPlanMutation, CreateMlmLayer, CreateTestLayer, CreateGenv2, CreateCoreMlmOrder, CreateVendorPackage, EditVendorLevelPackage)
 from .utils import recurs_iter, get_orders_paginator, get_core_paginator, get_net_tree, manage_data
 from core.core_marketing_manager import MlmNetworkManager
@@ -131,6 +131,18 @@ class Query(graphene.ObjectType):
     get_store_contents = graphene.List(VendorType, store=graphene.String())
     get_all_repurchase = graphene.List(CoreMarketingPlanTypes)
     order_detail = graphene.Field(OrdersType, order=graphene.String())
+    # store prod filtered
+    vendor_prod_fil = graphene.List(
+        ProductsType, pcat=graphene.String(), store=graphene.String())
+
+    def resolve_vendor_prod_fil(self, info, pcat, store):
+        ptypeSet = ParentCategory.objects.filter(pcat_id=pcat)
+        vendorSet = Vendor.objects.filter(vendor_id=store)
+        if not ptypeSet.exists():
+            raise Exception("Category not found !!!")
+        if not vendorSet.exists():
+            raise Exception("Vendor not found")
+        return Products.objects.filter(vendor=vendorSet[0], product_parent_category=ptypeSet[0])
 
     @permissions_checker([IsAuthenticated])
     def resolve_order_detail(self, info, order):
@@ -679,5 +691,6 @@ class Mutations(graphene.ObjectType):
     update_profile_pic = UpdateProfilePic.Field()
     add_store_promotions = AddStorePromotions.Field()
     update_order_ref = UpdateOrderRef.Field()
+
 
 schema = graphene.Schema(query=Query, mutation=Mutations)
